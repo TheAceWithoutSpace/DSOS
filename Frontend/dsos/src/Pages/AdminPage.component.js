@@ -23,6 +23,7 @@ class Admin extends Component{
             chartTitle:'',
         }
     }
+
     SetData(){
         if(this.state.days) {
             let StorageRequests=[];
@@ -110,7 +111,7 @@ class Admin extends Component{
         });
         this.setState({
             Users:Users,
-            chartTitle,chartTitle,
+            chartTitle:chartTitle,
             Requsts:Requsts,
             Bugs:Bugs,
             days:days,
@@ -178,10 +179,22 @@ render(){
                                             </h5>
                                             <h3 className="mt-3 mb-3 ">{this.state.Users}</h3>
                                             <p className="mb-0 text-muted">
-                                                <span className="text-success mr-2">
-                                                    {" 5.27%"}
+                                                {this.state.days[0]?
+                                                <>
+                                                {this.state.days[0].users>this.state.days[this.state.days.length-1].users
+                                                ?
+                                                <span className="text-danger mr-2">
+                                                    {parseInt((this.state.days[0].users/this.state.days[this.state.days.length-1].users)*-100 )+'%'}
                                                 </span>
-                                                <span className="text-nowrap">Since last month</span>
+                                                :
+                                                <span className="text-success mr-2">
+                                                    {parseInt((this.state.days[0].users/this.state.days[this.state.days.length-1].users)*100) +'%'}
+                                                </span>
+                                                }
+                                                <span className="text-nowrap">
+                                                    {this.state.days[0].Date+'/'+this.state.days[this.state.days.length-1].Date}
+                                                </span>
+                                                </>:null}
                                             </p>
                                         </div>
                                     </div>
@@ -201,11 +214,26 @@ render(){
                                             </h5>
                                             <h3 className="mt-3 mb-3">{this.CalcAggre()}</h3>
                                             <p className="mb-0 text-muted">
-                                                <span className="text-success mr-2">
-                                                    <i className="mdi mdi-arrow-up-bold"></i>
-                                                    {" 5.27%"}
+                                            {this.state.days[0]?
+                                                <>
+                                                {((this.state.days[0].AggreStorageUsegeAmmount/this.state.days[0].AggreStorageTotal)*100)>
+                                                ((this.state.days[this.state.days.length-1].AggreStorageUsegeAmmount/this.state.days[this.state.days.length-1].AggreStorageTotal)*100)
+                                                ?
+                                                <span className="text-danger mr-2">
+                                                    {parseInt((((this.state.days[0].AggreStorageUsegeAmmount/this.state.days[0].AggreStorageTotal)*100)-
+                                                ((this.state.days[this.state.days.length-1].AggreStorageUsegeAmmount/this.state.days[this.state.days.length-1].AggreStorageTotal)*100))*-1)+'%'}
                                                 </span>
-                                                <span className="text-nowrap">Since last month</span>
+                                                :
+                                                <span className="text-success mr-2">
+                                                    {parseInt((((this.state.days[0].AggreStorageUsegeAmmount/this.state.days[0].AggreStorageTotal)*100)-
+                                                ((this.state.days[this.state.days.length-1].AggreStorageUsegeAmmount/this.state.days[this.state.days.length-1].AggreStorageTotal)*100))*-1)+'%'}
+                                                </span>
+                                                }
+                                                <span className="text-nowrap">
+                                                    {this.state.days[0].Date+'/'+this.state.days[this.state.days.length-1].Date}
+                                                </span>
+                                                </>:null}
+
                                             </p>
                                         </div>
                                     </div>
@@ -227,11 +255,22 @@ render(){
                                             </h5>
                                             <h3 className="mt-3 mb-3">{this.state.Requsts}</h3>
                                             <p className="mb-0 text-muted">
-                                                <span className="text-success mr-2">
-                                                    <i className="mdi mdi-arrow-up-bold"></i>
-                                                    {" 5.27%"}
+                                            {this.state.days[0]?
+                                                <>
+                                                {this.state.days[0].StorageRequests>this.state.days[this.state.days.length-1].StorageRequests
+                                                ?
+                                                <span className="text-danger mr-2">
+                                                    {parseInt((this.state.days[0].StorageRequests/this.state.days[this.state.days.length-1].StorageRequests)*-100 )+'%'}
                                                 </span>
-                                                <span className="text-nowrap">Since last month</span>
+                                                :
+                                                <span className="text-success mr-2">
+                                                    {parseInt((this.state.days[0].StorageRequests/this.state.days[this.state.days.length-1].StorageRequests)*100) +'%'}
+                                                </span>
+                                                }
+                                                <span className="text-nowrap">
+                                                    {this.state.days[0].Date+'/'+this.state.days[this.state.days.length-1].Date}
+                                                </span>
+                                                </>:null}
                                             </p>
                                         </div>
                                     </div>
@@ -250,11 +289,24 @@ render(){
                                             </h5>
                                             <h3 className="mt-3 mb-3">{this.state.Bugs}</h3>
                                             <p className="mb-0 text-muted">
-                                                <span className="text-success mr-2">
-                                                    <i className="mdi mdi-arrow-up-bold"></i>
-                                                    {" 5.27%"}
+                                            
+                                            {this.state.days[0]?
+                                                <>
+                                                {this.state.days[0].bugReports>this.state.days[this.state.days.length-1].bugReports
+                                                ?
+                                                <span className="text-danger mr-2">
+                                                    {parseInt((this.state.days[0].bugReports/this.state.days[this.state.days.length-1].bugReports))*-100 +'%'}
                                                 </span>
-                                                <span className="text-nowrap">Since last month</span>
+                                                :
+                                                <span className="text-success mr-2">
+                                                    {parseInt((this.state.days[0].bugReports/this.state.days[this.state.days.length-1].bugReports)*100) +'%'}
+                                                </span>
+                                                }
+                                                <span className="text-nowrap">
+                                                    {this.state.days[0].Date+'/'+this.state.days[this.state.days.length-1].Date}
+                                                </span>
+                                                </>:null}
+
                                             </p>
                                         </div>
                                     </div>

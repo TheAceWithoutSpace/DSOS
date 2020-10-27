@@ -75,7 +75,7 @@ render(){
                     },
                     legend:{
                         display:this.props.displayLegend,
-                        position:this.props.legendPosition,
+                        position:'bottom',
                         
                     },
                 }}
