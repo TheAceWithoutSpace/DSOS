@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const mongoose=require("mongoose");
-const mongoURI="mongodb+srv://ben78901:69zu9b3k@cluster0.tl2pj.mongodb.net/<dbname>?retryWrites=true&w=majority";
+const mongoURI="mongodb+srv://ben78901:@cluster0.tl2pj.mongodb.net/<dbname>?retryWrites=true&w=majority";
 //"mongodb://localhost:27017/DSOS";
 app.use(cors());
 app.use(express.json());
