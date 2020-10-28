@@ -63,9 +63,10 @@ class createUser extends Component{
                 axios.post("http://localhost:3000/MonthDateRoute/add")
                 let ts=Date.now()
                 let date_ob = new Date(ts);
+                let day= date_ob.getDate();
                 let month = date_ob.getMonth() + 1;
                 let year = date_ob.getFullYear();
-                axios.post(`http://localhost:3000/MonthDateRoute/users/${month}.${year}`)
+                axios.post(`http://localhost:3000/MonthDateRoute/users/${day}.${month}.${year}`)
                 if(res.data)
                 {
                 this.props.Auth(res.data);

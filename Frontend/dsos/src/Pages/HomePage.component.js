@@ -18,6 +18,7 @@ export default class ArcitectPage extends Component{
 
     RequestsList(){
         return this.state.Requests.map( currentRequests=>{
+            console.log(currentRequests)
             return(
             <tr key={currentRequests._id}>
             <td>{currentRequests._id}</td>

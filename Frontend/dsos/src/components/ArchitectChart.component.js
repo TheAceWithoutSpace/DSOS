@@ -33,7 +33,7 @@ export default class AdminSpecs extends Component{
     render(){
         return(
             <div className="container" style={{marginTop:50, position:'relative',width:600,height:400}}>
-                <Chart type='Pie' title='Users By The Num Of Todos' chartData={this.SetData()}/>
+                <Chart type='Pie' title='Requests' chartData={this.SetData()}/>
             </div>
         )
     }

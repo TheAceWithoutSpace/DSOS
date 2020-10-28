@@ -27,43 +27,42 @@ router.route('/').get((req,res)=>{
     })
 //get all the valus for range dates
 router.route("/range/:startDate/:endDate").get((req,res)=>{
-    console.log(req.params.startDate+' || '+req.params.endDate)
     MonthDate.find({"Date": {"$gte": req.params.startDate, "$lt": req.params.endDate}})
         .then((Req)=>res.json(Req))
         .catch((err)=>res.json(404).json({err:'Couldent Find data in given date'+err}))
 })
 //Update The MonthReports users 
 router.route("/users/:Date").post((req,res)=>{
-    MonthDate.findOneAndUpdate({Month:req.params.Date},
+    console.log(req.params.Date)
+    MonthDate.findOneAndUpdate({Date:req.params.Date},
         {$inc:{users:1}},{new:true})
         .then((Req)=>res.json({Req}))
         .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
 })
 //Update The MonthReports StorageRequests 
 router.route("/StorageRequests/:Date").post((req,res)=>{
-    MonthDate.findOneAndUpdate({Month:req.params.Date},
+    MonthDate.findOneAndUpdate({Date:req.params.Date},
         {$inc:{StorageRequests:1}},{new:true})
         .then((Req)=>res.json({Req}))
         .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
 })
 //Update The MonthReports bugReports 
 router.route("/bugReports/:Date").post((req,res)=>{
-    MonthDate.findOneAndUpdate({Month:req.params.Date},
+    MonthDate.findOneAndUpdate({Date:req.params.Date},
         {$inc:{bugReports:1}},{new:true})
         .then((Req)=>res.json({Req}))
         .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
 })
 //Update The MonthReports AggreStorageTotal 
 router.route("/AggreStorageTotal/:Date").post((req,res)=>{
-    MonthDate.findOneAndUpdate({Month:req.params.Date},
+    MonthDate.findOneAndUpdate({Date:req.params.Date},
         {$inc:{AggreStorageTotal:req.body.AggreStorageTotal}},{new:true})
         .then((Req)=>res.json({Req}))
         .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
 })
 //Update The MonthReports AggreStorageUsegeAmmount 
 router.route("/AggreStorageUsegeAmmount/:Date").post((req,res)=>{
-
-    MonthDate.findOneAndUpdate({Month:req.params.Date},
+    MonthDate.findOneAndUpdate({Date:req.params.Date},
         {$inc:{AggreStorageUsegeAmmount:req.body.AggreStorageUsegeAmmount}},{new:true})
         .then((Req)=>res.json({Req}))
         .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))

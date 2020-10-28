@@ -53,11 +53,12 @@ class ReportBug extends Component{
         }
         let ts=Date.now()
         let date_ob = new Date(ts);
+        let day= date_ob.getDate();
         let month = date_ob.getMonth() + 1;
         let year = date_ob.getFullYear();
         axios.post('http://localhost:3000/Bug/add',Request)
             .then(res=>{
-                axios.post(`http://localhost:3000/MonthDateRoute/bugReports/${month}.${year}`)
+                axios.post(`http://localhost:3000/MonthDateRoute/bugReports/${day}.${month}.${year}`)
                 this.setState({message:"Request send"})
                 this.props.history.push("/Home");
             })

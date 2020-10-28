@@ -61,12 +61,12 @@ class createRequest extends Component{
         })
     }
     handleChangeAggregate(e){
-        console.log(e.target.value)
         this.setState({
             Aggregate:e.target.value
         })
-        axios.get('http://localhost:3000/SvmRoute/')
-        .then((res)=>{this.setState({SvmArray:res.data})})
+        axios.get(`http://localhost:3000/SvmRoute/SvmByAggreName/${e.target.value}`)
+        .then((res)=>{console.log(res.data.Req)
+            this.setState({SvmArray:res.data.Req})})
     }
     onclicked(e){
         this.setState({flag:true})
@@ -91,11 +91,12 @@ class createRequest extends Component{
         console.log(Request);
         let ts=Date.now()
         let date_ob = new Date(ts);
+        let day= date_ob.getDate();
         let month = date_ob.getMonth() + 1;
         let year = date_ob.getFullYear();
         axios.post('http://localhost:3000/Request/add',Request)
             .then(res=>{
-                axios.post(`http://localhost:3000/MonthDateRoute/StorageRequests/${month}.${year}`)
+                axios.post(`http://localhost:3000/MonthDateRoute/StorageRequests/${day}.${month}.${year}`)
                 this.setState({message:"Request send"})
                 this.props.history.push("/Home");
             })

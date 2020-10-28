@@ -28,7 +28,6 @@ class Login_Signup extends React.Component{
     }
     render()
     {
-        console.log(this.state.message)
         return(
             <div className="container" >
                 {this.state.message?<Message msg={this.state.message}/>:''}

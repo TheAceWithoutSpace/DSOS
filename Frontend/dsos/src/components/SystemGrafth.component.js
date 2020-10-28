@@ -9,66 +9,92 @@ export default class SystemGrafth extends Component{
         chartData:{n:0},
         Requests:[],
         SVM:'',
+        Chartdata:'',
         TotalAmmount:'',
         message:'',
+        ChartTitle:'loading',
        }
-    //    this.setdata=this.setdata.bind(this);
 }
 
 async componentDidMount(nextProps)
-{   console.log(this.props +"||"+nextProps)
+{
     if(this.props!==nextProps){
     let TotalAmount=0;
     let UsedAmount=0;
-    let SVMS=[];
+    let Chartdata=[];
     let SVMSArray=[];
-     axios.get(`http://localhost:3000/AGGREGATE/Aggre/${this.props.Aggre}`)
-        .then((res)=>{TotalAmount=res.data.Req[0].TotalAmount 
-            UsedAmount=res.data.Req[0].Amount});
+    let SvmsName=[];
+    let SvmsAmount=[];
+    let ChartTitle='';
+     await axios.get(`http://localhost:3000/AGGREGATE/Aggre/${this.props.Aggre}`)
+           .then((res)=>{
+               TotalAmount=res.data.Req[0].TotalAmount; 
+               UsedAmount=res.data.Req[0].Amount;
+               ChartTitle=res.data.Req[0].name;
+            });
      await axios.get(`http://localhost:3000/SvmRoute/SvmByAggreName/${this.props.Aggre}`)
         .then((res)=>SVMSArray=res.data.Req);
+        SvmsAmount.push(((UsedAmount/TotalAmount)*100));
+        SvmsName.push('Free')
         SVMSArray.forEach((SVM)=>{
-            })         
-            SVMS.push({
-                chartData:{
-                    labels:['Free','Used'],
-                    datasets:[{
-                     label:"Requests",
-                     backgroundColor:["rgba(245, 73, 120, 0.65)",
-                                      "rgba(175, 146, 234, 0.65)",
-                                      ],
-                     data:[(TotalAmount-UsedAmount),UsedAmount]
-                    },
-                    ]
-                }
-            })
+            if(SVM.Amount!==0)
+            {   
+                SvmsAmount.push((((SVM.Amount/TotalAmount)*100)))
+                SvmsName.push(SVM.name)
+            }
+            }) 
+                Chartdata.push({
+                    chartData:{
+                        labels:SvmsName,
+                        datasets:[{
+                        label:"Requests",
+                        backgroundColor:["rgba(245, 73, 120, 0.65)",
+                                       "rgba(175, 146, 234, 0.65)",
+                                       "rgba(152, 244, 244, 0.56)",
+                                       "rgba(152, 244, 152, 0.56)",
+                                       "rgba(244, 152, 152, 0.56)",
+                                       "rgba(244, 244, 152, 0.56)",
+                                       "rgba(244, 152, 244, 0.56)",
+                                       "rgba(152, 198, 244, 0.56)",
+                                          ],
+                        data:SvmsAmount
+                        },
+                        ]
+                    }
+                })
+            
             let message='';
-            if(TotalAmount>UsedAmount+this.props.Amount)
+            let presentage=parseInt(((this.props.Amount+UsedAmount)/TotalAmount)*100);
+            if(TotalAmount===null||UsedAmount===null||this.props.Amount===null)
             {
-                message=`All Clear ${((parseInt((UsedAmount/TotalAmount)*100)-100)*-1)}% Free left`
+                message="Server Errore cant get the data Please try again later"
             }
-            if(TotalAmount<=UsedAmount+this.props.Amount&&UsedAmount+this.props.Amount<TotalAmount*1.2)
+            if(presentage<100)
             {
-                message=`OVER SUBSCRIBE  ${parseInt((UsedAmount/TotalAmount)*100)}% Black line %`
+                message=`All Clear ${(presentage-100)*-1}% Free left after`
             }
-            if(UsedAmount+this.props.Amount>TotalAmount*1.4)
+            if(presentage>=100&&presentage<140)
             {
-                message=`Over SUBSCRIBE ${parseInt((UsedAmount/TotalAmount)*100)}% Red line cant allocate this user Storage request`
+                message=`OVER SUBSCRIBE if you accept ${presentage}% Black line %`
             }
-            this.props.getMessage(message);
-            this.setState({SVM:SVMS})
+            if(presentage>140)
+            {
+                message=`Over SUBSCRIBE ${presentage}% Red line cant allocate this user Storage request`
+            }
+            this.props.getMessage({message,presentage});
+            this.setState({Chartdata:Chartdata,ChartTitle:ChartTitle})
     }   
 }
  Charts(){
-    if(this.state.SVM)
+    if(this.state.Chartdata)
     {
     return(
-        this.state.SVM.map((currntSvm,index)=>{
+        this.state.Chartdata.map((Chartdata,index)=>{
             return(
                     <div className="col-md-6" key={index}>
-                        {this.state.SVM[index]?
-                             <Chart type='Pie' title={currntSvm} chartData={this.state.SVM[index]}/>
-                        :null}
+                        {this.state.Chartdata[index]?
+                             <Chart type='Pie' title={this.state.ChartTitle} chartData={this.state.Chartdata[index]}/>
+                        :<alert className="alert alert-warning">Server Error Please try again later</alert>}
                     </div>
                 )
         })

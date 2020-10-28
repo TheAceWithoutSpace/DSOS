@@ -15,12 +15,13 @@ class ArcitectPage extends Component{
             Amount:'',
             type:'',
             message:'',
+            presentage:'',
         }
         this.UptateStatus=this.UptateStatus.bind(this);
     }
-    getMessage(message)
+    getMessage(data)
     {
-        this.setState({message:message})
+        this.setState({message:data.message,presentage:data.presentage})
     }
 
     UptateStatus(status){
@@ -37,9 +38,10 @@ class ArcitectPage extends Component{
                 const AggreStorageTotal={AggreStorageTotal:this.state.Amount}
                 let ts=Date.now()
                 let date_ob = new Date(ts);
+                let day= date_ob.getDate();
                 let month = date_ob.getMonth() + 1;
                 let year = date_ob.getFullYear();
-                axios.post(`http://localhost:3000/MonthDateRoute/AggreStorageTotal/${month}.${year}`,AggreStorageTotal)
+                axios.post(`http://localhost:3000/MonthDateRoute/AggreStorageTotal/${day}.${month}.${year}`,AggreStorageTotal)
                 axios.post(`http://localhost:3000/AGGREGATE/add`,Aggregate)
                  .then(res=>{console.log(res)
                 })
@@ -66,9 +68,10 @@ class ArcitectPage extends Component{
                 const AggreStorageUsegeAmmount={AggreStorageUsegeAmmount:this.state.Amount}
                 let ts=Date.now()
                 let date_ob = new Date(ts);
+                let day= date_ob.getDate();
                 let month = date_ob.getMonth() + 1;
                 let year = date_ob.getFullYear();
-                axios.post(`http://localhost:3000/MonthDateRoute/AggreStorageUsegeAmmount/${month}.${year}`,AggreStorageUsegeAmmount)
+                axios.post(`http://localhost:3000/MonthDateRoute/AggreStorageUsegeAmmount/${day}.${month}.${year}`,AggreStorageUsegeAmmount)
                 axios.post("http://localhost:3000/VolumeRoute/add",Volume)
                 .then(res=>{
                     axios.post(`http://localhost:3000/SvmRoute/Amount/${this.state.Name.S}`,Amount)
@@ -177,8 +180,13 @@ class ArcitectPage extends Component{
                     </div>
                     <div className="card-footer text-muted">
                         <div className="row d-flex justify-content-around">
+                            {this.state.presentage>140
+                            ?
+                            <button className="btn btn-outline-success disabled col-md-4">Accept</button>
+                            :
                             <button onClick={()=>this.UptateStatus('Accepted')}className="btn btn-outline-success  col-md-4">Accept</button>
-                            <button onClick={()=>this.UptateStatus('Decline ')}className="btn btn-outline-danger   col-md-4">Decline</button>
+                            }
+                            <button onClick={()=>this.UptateStatus('Decline')}className="btn btn-outline-danger   col-md-4">Decline</button>
                         </div>
                      </div>
                 </div>

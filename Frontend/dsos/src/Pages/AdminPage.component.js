@@ -316,7 +316,7 @@ render(){
                         <div className="col-lg-7 col-xl-6">
                             <div className="card ">
                                 <div className="card-body" style={{position: "relative"}}>
-                                    <div id="high-performing-product" className="align-items-center pt-4 pb-4">
+                                    <div id="high-performing-product" className="align-items-center pt-4 pb-3">
                                          <div className="mar" style={{position:'relative'}}>
                                             <Chart type='line' title={this.state.chartTitle} chartData={this.SetData()}/>
                                         </div>
