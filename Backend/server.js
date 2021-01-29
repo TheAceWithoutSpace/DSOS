@@ -2,8 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const mongoose=require("mongoose");
+<<<<<<< HEAD
 const SSH2Shell =require("ssh2shell");
 require('dotenv/config');
+=======
+const mongoURI="mongodb+srv://ben78901:@cluster0.tl2pj.mongodb.net/<dbname>?retryWrites=true&w=majority";
+//"mongodb://localhost:27017/DSOS";
+>>>>>>> 6b226da18ba9e0d8282584c22047e4605be328f5
 app.use(cors());
 app.use(express.json());
 
