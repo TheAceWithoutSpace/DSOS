@@ -11,10 +11,10 @@ export default class ArcitectPage extends Component{
     }
     
     componentDidMount(){
-        axios.get(`http://localhost:3000/Request/`)
-        .then(res=>{this.setState({Requests:res.data})})
-        .catch(err=>{console.log('Error'+err)})
-        axios.post("http://localhost:3000/MonthDateRoute/add")
+        axios.get(`Request/`)
+        .then(res=>{
+              this.setState({Requests:res.data})
+            })
     }
 
     SetChartData(){
@@ -42,8 +42,10 @@ export default class ArcitectPage extends Component{
                     })
                 }
     render(){
+        const Ur=JSON.parse(localStorage.getItem('user'));
         return(
         <div>
+            {Ur.Ar?null:window.location.href = '/UKnoob'}
             <AdminastorChart Requsets={this.state.Requests} ChartData={this.SetChartData()}/>
             <div className="row container-fluid d-flex justify-content-center">
                   {this.RequestsList()}

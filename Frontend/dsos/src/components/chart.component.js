@@ -17,6 +17,7 @@ export default class chart extends Component{
 }
 componentDidUpdate(prevProps,prevState){
     if (prevProps !== this.props){
+        console.log(this.props.chartData)
     this.setState({chartData:this.props.chartData.chartData})
     }
 }

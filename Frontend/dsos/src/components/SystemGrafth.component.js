@@ -26,22 +26,34 @@ async componentDidMount(nextProps)
     let SvmsName=[];
     let SvmsAmount=[];
     let ChartTitle='';
-     await axios.get(`http://localhost:3000/AGGREGATE/Aggre/${this.props.Aggre}`)
-           .then((res)=>{
-               TotalAmount=res.data.Req[0].TotalAmount; 
-               UsedAmount=res.data.Req[0].Amount;
-               ChartTitle=res.data.Req[0].name;
-            });
-     await axios.get(`http://localhost:3000/SvmRoute/SvmByAggreName/${this.props.Aggre}`)
-        .then((res)=>SVMSArray=res.data.Req);
-        SvmsAmount.push(((UsedAmount/TotalAmount)*100));
+        await axios.get(`Aggregate/Aggre/${this.props.Aggre}`)
+        .then((res)=>{
+            console.log(res.data)
+            if(res.data[0]){
+                TotalAmount=res.data[0].TotalAmount; 
+                UsedAmount=res.data[0].Amount;
+                ChartTitle=res.data[0].name;
+            }
+         });
+    await axios.get(`SvmRoute/SvmByAggreName/${this.props.Aggre}`)
+        .then((res)=>{
+            console.log(res.data)
+            SVMSArray=res.data
+        });
+        if(UsedAmount===0){
+            SvmsAmount.push(((TotalAmount/TotalAmount)*100));
+        }else{
+            SvmsAmount.push((parseInt((( TotalAmount-UsedAmount)/TotalAmount)*10000))/100);
+        }
         SvmsName.push('Free')
         SVMSArray.forEach((SVM)=>{
+            console.log(SVM)
             if(SVM.Amount!==0)
-            {   
-                SvmsAmount.push((((SVM.Amount/TotalAmount)*100)))
+            {   console.log( SVM.Amount+'||'+TotalAmount)
+                SvmsAmount.push((parseInt(( SVM.Amount/TotalAmount)*10000))/100)
                 SvmsName.push(SVM.name)
             }
+            console.log(SvmsAmount)
             }) 
                 Chartdata.push({
                     chartData:{
@@ -62,7 +74,7 @@ async componentDidMount(nextProps)
                         ]
                     }
                 })
-            
+            console.log(Chartdata)
             let message='';
             let presentage=parseInt(((this.props.Amount+UsedAmount)/TotalAmount)*100);
             if(TotalAmount===null||UsedAmount===null||this.props.Amount===null)
@@ -82,13 +94,15 @@ async componentDidMount(nextProps)
                 message=`Over SUBSCRIBE ${presentage}% Red line cant allocate this user Storage request`
             }
             this.props.getMessage({message,presentage});
+            
             this.setState({Chartdata:Chartdata,ChartTitle:ChartTitle})
     }   
 }
  Charts(){
     if(this.state.Chartdata)
     {
-    return(
+        console.log(this.state.Chartdata[0].chartData)
+    return( 
         this.state.Chartdata.map((Chartdata,index)=>{
             return(
                     <div className="col-md-6" key={index}>

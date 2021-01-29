@@ -9,7 +9,8 @@ class createRequest extends Component{
     
     constructor(props){
         super(props);
-        this.handleChangeName=this.handleChangeName.bind(this);
+        this.handleChangeAggre=this.handleChangeAggre.bind(this);
+        this.handleChangeCluster=this.handleChangeCluster.bind(this);
         this.setSelectedFile=this.setSelectedFile.bind(this);
         this.onclicked=this.onclicked.bind(this);
         this.onChangeSvm=this.onChangeSvm.bind(this);
@@ -24,12 +25,15 @@ class createRequest extends Component{
             message:'',
             flag:false,
             Svm:'',
+            location:'',
+            Cluster:'',
+            Aggre:'',
             AggregateArray:'',
             NewFlag:false,
         }
     }
     componentDidMount(){
-        axios.get('http://localhost:3000/AGGREGATE/')
+        axios.get('Aggregate/')
         .then((res)=>this.setState({AggregateArray:res.data}))
     }
     // handeling form fields
@@ -38,10 +42,15 @@ class createRequest extends Component{
             File:e.target.files[0]
         });
     }
-    handleChangeName(e){
+    handleChangeAggre(e){
+        console.log(this.state.AggregateArray[e.target.value])
         this.setState({
-            Name:e.target.value
+            Aggre:this.state.AggregateArray[e.target.value].name,
+            location:this.state.AggregateArray[e.target.value].location
         });
+    }
+    handleChangeCluster(e){
+
     }
     onChangeSvm(e){
         this.setState({
@@ -58,10 +67,11 @@ class createRequest extends Component{
         const FileID=await this.upload(this.state.File);
         console.log(FileID);
         const Request={
-            userID:this.props.location.aboutProps.User._id,
-            username:this.props.location.aboutProps.User.username,
-            email:this.props.location.aboutProps.User.email,
-            Name:{A:this.state.Name,S:this.state.Svm,V:'11'},
+            userID:JSON.parse(localStorage.getItem('user'))._id,
+            username:JSON.parse(localStorage.getItem('user')).U,
+            email:JSON.parse(localStorage.getItem('user')).E,
+            Name:{C:this.state.Cluster,A:this.state.Aggre,S:this.state.Svm,V:'11'},
+            Location:this.state.location,
             Amount:0,
             File:FileID,
             status:'pending',
@@ -74,9 +84,9 @@ class createRequest extends Component{
         let day= date_ob.getDate();
         let month = date_ob.getMonth() + 1;
         let year = date_ob.getFullYear();
-        axios.post('http://localhost:3000/Request/add',Request)
-            .then(res=>{
-                axios.post(`http://localhost:3000/MonthDateRoute/StorageRequests/${day}.${month}.${year}`)
+        await axios.post('Request/add',Request)
+            .then(async(res)=>{
+                await axios.post(`MonthDateRoute/StorageRequests/${month}-${day}-${year}`)
                 this.setState({message:"Request send"})
                  this.props.history.push("/Home");
             })
@@ -89,16 +99,14 @@ class createRequest extends Component{
         if(e)
         {
             try{
-                  const res=await axios.post('http://localhost:3000/File/upload',formData,{
+                  const res=await axios.post('File/upload',formData,{
                     headers:{
                       'content-Type':'multipart/form-data'
                     },
                     onUploadProgress:ProgressEvent=>{
-                        for (let i=0;i<ProgressEvent.total;i+=ProgressEvent.total/100)
-                        {
+                        console.log(ProgressEvent);
                             console.log()
-                            this.setState({uploadPercentage:(parseInt((i*100)/ProgressEvent.total))});
-                        }
+                            this.setState({uploadPercentage:(parseInt((ProgressEvent.loaded/ProgressEvent.total)*100))});
                     }
                   });
                   return(res.data.file.filename);
@@ -111,13 +119,29 @@ class createRequest extends Component{
         if(this.state.AggregateArray)
         {
             return(
-                this.state.AggregateArray.map((CurrentAggre)=>{
-                    return(
-                        <option key={CurrentAggre._id} value={CurrentAggre.name}>{CurrentAggre.name}</option>
-                    )}
+                this.state.AggregateArray.map((CurrentAggre,index)=>{
+                    if(CurrentAggre.Amount===0)
+                        {   
+                            return(
+                            <option key={CurrentAggre._id} value={index} >
+                                Name:{CurrentAggre.name}--Location:{CurrentAggre.location}--Free:100%
+                            </option>
+                            )
+                        }else{
+                            return(
+                                <option key={CurrentAggre._id} value={index}>Name:{CurrentAggre.name}--
+                                Location:{CurrentAggre.location}--Free:{((CurrentAggre.Amount/CurrentAggre.TotalAmount)*-100)+100}%
+                                </option>
+                                )
+                        }
+                    }
+
                 ))
         }
         else{return null}
+    }
+    listCluster(){
+
     }
     // rendering the formn
     render(){
@@ -137,7 +161,7 @@ class createRequest extends Component{
                 <div className="form-group mb-3">
                 <div>
                     <div className='custom-file mb-4'>
-                        <input type="file" className='custom-file-input' id='customFile' onChange={this.setSelectedFile}/>
+                        <input type="file" className='custom-file-input' id='customFile' required onChange={this.setSelectedFile}/>
                         <label className='custom-file-label' htmlFor='customFile'>
                         {this.state.File.name?this.state.File.name:'Upload File'}
                         </label>
@@ -145,10 +169,16 @@ class createRequest extends Component{
                         <Progress percentage={this.state.uploadPercentage}/>
                     </div>
                 </div>
-
+                <div className="form-group">
+                    <label>Cluster Name:</label>
+                    <select className="custom-select" required value={this.state.Cluster} onChange={this.handleChangeCluster}>
+                    <option value="" defaultValue disabled>--chose Cluster--</option> 
+                        {this.listCluster()}
+                    </select>
+                </div>
                 <div className="form-group">
                     <label>Aggregate Name:</label>
-                    <select  required value={this.state.Name} onChange={this.handleChangeName}>
+                    <select className="custom-select" required value={this.state.Aggre} onChange={this.handleChangeAggre}>
                     <option value="" defaultValue disabled>--chose Aggregate--</option> 
                         {this.list()}
                     </select>

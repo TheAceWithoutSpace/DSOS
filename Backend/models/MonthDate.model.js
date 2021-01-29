@@ -3,7 +3,7 @@ const Schema= mongoose.Schema;
 
 const MonthDateModle=new Schema({
     Date:{
-        type:String,
+        type:Date,
         required:true,
         unique:true
         },

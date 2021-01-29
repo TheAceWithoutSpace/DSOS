@@ -1,27 +1,47 @@
 const mongoose = require("mongoose");
 const Schema= mongoose.Schema;
 
-const AGGREGATESchema=new Schema({
-    name:{
+const AggregateSchema=new Schema({
+    Name:{       
+         type:String,
+         required:true, 
+         unique:true,
+        },
+    Cluster:{
         type:String,
         required:true,
-        unique:true
         },
-    Amount:{
+    env:{//envierment 
+        type:String,
+        required:true
+    },
+    total:{//total ammount allday
+        type:Number,
+        required:true,
+    },
+    used:{//שימוש
+        type:Number,
+        required:true,
+    },
+    allocated:{//הוקצה
+        type:Number,
+        required:true,
+    },
+    leftToAllocate:{//Total X1.2 left to allocate
+        type:Number,
+        required:true,
+    },
+    full:{//1-100% used
+        type:Number,
+        required:true,
+    },
+    overSubsPrecent:{//over 100 
         type:Number,
         required:true
-    },
-    location:{
-        type:String,
-        required:true
-    },
-    TotalAmount:{
-        type:String,
-        required:true,
     },
     date: { type: Date, default: Date.now },
 },{
     timestamp:true,
 });
-const AGGREGATE =mongoose.model('AGGREGATE',AGGREGATESchema);
-module.exports=AGGREGATE;
+const Aggregate =mongoose.model('Aggregate',AggregateSchema);
+module.exports=Aggregate;

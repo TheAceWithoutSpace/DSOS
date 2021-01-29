@@ -24,45 +24,39 @@ class ArcitectPage extends Component{
         this.setState({message:data.message,presentage:data.presentage})
     }
 
-    UptateStatus(status){
+    async UptateStatus(status){
         const Status={status:status};
         if(status==='Accepted')
         {
-            if(this.state.type==="Aggregate"){
-                const Aggregate={
-                    Name:this.state.Name.A,
-                    Amount:this.state.Amount,
-                    location:this.state.Name.V,
-                }
-                console.log(Aggregate)
-                const AggreStorageTotal={AggreStorageTotal:this.state.Amount}
-                let ts=Date.now()
-                let date_ob = new Date(ts);
-                let day= date_ob.getDate();
-                let month = date_ob.getMonth() + 1;
-                let year = date_ob.getFullYear();
-                axios.post(`http://localhost:3000/MonthDateRoute/AggreStorageTotal/${day}.${month}.${year}`,AggreStorageTotal)
-                axios.post(`http://localhost:3000/AGGREGATE/add`,Aggregate)
-                 .then(res=>{console.log(res)
-                })
-                
-            }
-            else if(this.state.type==="Svm"){
+            if(this.state.type==="Svm"){
+                console.log(this.state.Location)
                 const Svm={
+                    Cluster:this.state.Name.C,
+                    env:this.state.Location,
+                    aggregate:this.state.Name.A,
                     Name:this.state.Name.S,
-                    AGGREGATE:this.state.Name.A,
-                    File:this.state.File,
+                    total:0,
+                    used:0,
+                    available:0,
+                    full:0,
+                    dedupeCapSaved:0,
+                    VolumeCount:0,
                 }
-                axios.post("http://localhost:3000/SvmRoute/add",Svm)
+                await axios.post("SvmRoute/add",Svm)
                 .then(res=>{console.log(res.data)
                 })
             }
             else if(this.state.type==="volume"){
                 const Volume={
-                    name:this.state.Name.V,
-                    Amount:this.state.Amount,
-                    Svm:this.state.Name.S,
-                    Aggregate:this.state.Name.A,
+                    Cluster:this.state.Name.C,
+                    env:this.state.Location,
+                    aggregate:this.state.Name.A,
+                    svm:this.state.Name.S,
+                    Name:this.state.Name.V,
+                    total:this.state.Amount,
+                    used:0,
+                    available:0,
+                    dedupeCapSaved:0, 
                 }
                 const Amount={Amount:this.state.Amount}
                 const AggreStorageUsegeAmmount={AggreStorageUsegeAmmount:this.state.Amount}
@@ -71,33 +65,34 @@ class ArcitectPage extends Component{
                 let day= date_ob.getDate();
                 let month = date_ob.getMonth() + 1;
                 let year = date_ob.getFullYear();
-                axios.post(`http://localhost:3000/MonthDateRoute/AggreStorageUsegeAmmount/${day}.${month}.${year}`,AggreStorageUsegeAmmount)
-                axios.post("http://localhost:3000/VolumeRoute/add",Volume)
-                .then(res=>{
-                    axios.post(`http://localhost:3000/SvmRoute/Amount/${this.state.Name.S}`,Amount)
-                    .then((res)=>{
-                        axios.post(`http://localhost:3000/AGGREGATE/Amount/${this.state.Name.A}`,Amount)
+                await axios.post(`MonthDateRoute/AggreStorageUsegeAmmount/$${month}-${day}-${year}`,AggreStorageUsegeAmmount)
+                await axios.post("VolumeRoute/add",Volume)
+                .then(async(res)=>{
+                    await axios.post(`SvmRoute/Amount/${this.state.Name.S}`,Amount)
+                    .then(async(res)=>{
+                    await axios.post(`Aggregate/Amount/${this.state.Name.A}`,Amount)
                     })
                 })
             }
         }
-        axios.post(`http://localhost:3000/Request/status/${this.props.match.params.id}`,Status)
-        .then(res=>{
+        await axios.post(`Request/status/${this.props.match.params.id}`,Status)
+        .then((res)=>{
             this.props.history.push("/Architect");
         })
     }
     componentDidMount(){
         //getRequestByID
-        axios.get(`http://localhost:3000/Request/${this.props.match.params.id}`)
+        axios.get(`Request/${this.props.match.params.id}`)
         .then(res=>{console.log(res.data)
             this.setState({
-                username:res.data.Req.username,
-                email:res.data.Req.email,
-                Name:{A:res.data.Req.Name.A,S:res.data.Req.Name.S,V:res.data.Req.Name.V},
-                Amount:res.data.Req.Amount,
-                File:res.data.Req.File,
-                type:res.data.Req.type,
-                key:res.data.Req._id
+                username:res.data[0].username,
+                email:res.data[0].email,
+                Name:{A:res.data[0].Name.A,S:res.data[0].Name.S,V:res.data[0].Name.V},
+                Location:res.data[0].Location,
+                Amount:res.data[0].Amount,
+                File:res.data[0].File,
+                type:res.data[0].type,
+                key:res.data[0]._id
             });
         })
     }
@@ -105,7 +100,7 @@ class ArcitectPage extends Component{
     render(){
         let SVMS=[];
         SVMS[0]=this.state.Svm
-        let downlodURI=`http://localhost:3000/File/${this.state.File}`;
+        let downlodURI=`File/${this.state.File}`;
         if(this.state.type==='Aggregate')
         {
             return(
@@ -114,18 +109,17 @@ class ArcitectPage extends Component{
                    {this.state.type} Request
                    </div>
                    <div className='row'>
+                   <div className='col-md-3'></div>
                        <div className="col-md-6">
                                <div className="card-body">
                                <h5 className="card-title">{this.state.username}</h5>
                                <p className="card-text">Email:{this.state.email}<br/>{this.state.type}:{this.state.Name.A}
                                <br/>Total Aggregate Storage: {this.state.Amount}gb<br/>
-                               Location: {this.state.Name.V}
+                               Location: {this.state.Location}
                                </p>
-
-                               {/* <a href={downlodURI} className='btn btn-primary' download>Download File</a> */}
                            </div>
                        </div>
-                       {/* <SystemGrath SVMS={SVMS}/> */}
+                    <div className='col-md-3'></div>
                    </div>
                    <div className="card-footer text-muted">
                        <div className="row d-flex justify-content-around">
@@ -142,14 +136,18 @@ class ArcitectPage extends Component{
             {this.state.type} Request
             </div>
             <div className='row'>
+                <div className='col-md-3'></div>
                 <div className="col-md-6">
                         <div className="card-body">
                         <h5 className="card-title">{this.state.username}</h5>
-                        <p className="card-text">Email:{this.state.email}<br/>{this.state.type}:{this.state.Name.S}</p>
+                        <p className="card-text">Email:{this.state.email}
+                        <br/>{this.state.type}:{this.state.Name.S}
+                        <br/><br/>location : {this.state.Location}\..\..\{this.state.Name.A}\{this.state.Name.S}
+                        </p>
                         <a href={downlodURI} className='btn btn-primary' download>Download File</a>
                     </div>
                 </div>
-                {/* <SystemGrath SVMS={SVMS}/> */}
+                <div className='col-md-3'></div>
             </div>
             <div className="card-footer text-muted">
                 <div className="row d-flex justify-content-around">
@@ -160,8 +158,7 @@ class ArcitectPage extends Component{
         </div>
         )
         }else if(this.state.type==="volume"){
-            return(
-                
+            return(        
                 <div className="card text-center">
                     {this.state.message?<Massage msg={this.state.message}/>:''}
                     <div className="card-header">
@@ -172,6 +169,7 @@ class ArcitectPage extends Component{
                                 <div className="card-body">
                                 <h5 className="card-title">{this.state.username}</h5>
                                 <p className="card-text">Email:{this.state.email}<br/>{this.state.type}: {this.state.Name.V}
+                                <br/>location :{this.state.Location}\..\..\{this.state.Name.A}\{this.state.Name.S}
                                 <br/>Amount of storage that is needed: {this.state.Amount}GB </p>
                                 <a href={downlodURI} className='btn btn-primary' download>Download File</a>
                             </div>

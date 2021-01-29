@@ -12,18 +12,26 @@ const RequstDataSchema=new Schema({
         required:true,
     },
     Name:{
-        A:{
+        C:{//Cluster
             require:true,
             type:String,
         },
-        S:{
+        A:{//Aggre
             require:true,
             type:String,
         },
-        V:{
+        S:{//Svm
             require:true,
             type:String,
         },
+        V:{//vloume
+            require:true,
+            type:String,
+        },
+    },
+    Location:{
+        require:true,
+        type:String,
     },
     Amount:{
         required:true,

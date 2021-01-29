@@ -1,7 +1,13 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 
+function logout()
+{
+localStorage.setItem('user',JSON.stringify({_id:false,A:false,Ar:false,N:false}))
+window.location.href = '/SignIN';
+}
 function Navbar(props){
+    console.log(props.User)
         return(
             <nav className="navbar navbar-expand-lg navbar-dark bg-dark ">
                 {props.User._id? 
@@ -16,7 +22,7 @@ function Navbar(props){
                     {props.User._id?//@IF loggedin
                         <div>
                             {/* @if Admin(Admin is also Arcitect) */}
-                            {props.User.Admin?
+                            {props.User.A?
                             <>
                                 <ul className="navbar-nav mr-auto">
                                 <li className='navbar-item'>
@@ -26,12 +32,12 @@ function Navbar(props){
                                     <Link to ='/Architect' className='nav-link'>Architect</Link>
                                 </li>
                                 <li className='navbar-item'>
-                                    <Link to ='/SignIn' onClick={()=>{props.setUser('')}} className='nav-link'>logout</Link>
+                                <button onClick={logout} className='nav-link btn btn-dark'>Logout</button>
                                 </li>
                                 </ul>
                             </>
                                 ://@ElseIF Architect
-                                <div>{props.User.Architect?
+                                <div>{props.User.Ar?
                                     <>
                                     <ul className="navbar-nav mr-auto">
                                         {/* <li className="navbar-item">
@@ -41,7 +47,7 @@ function Navbar(props){
                                             <Link to ='/Architect' className='nav-link'>Architect</Link>
                                         </li>
                                         <li className='navbar-item'>
-                                            <Link to ='/SignIn' onClick={()=>{props.setUser('')}} className='nav-link'>logout</Link>
+                                            <button onClick={logout} className='nav-link btn btn-dark'>Logout</button>
                                         </li>    
                                     </ul>
                                     </>
@@ -50,9 +56,6 @@ function Navbar(props){
                                     <ul className="navbar-nav mr-auto">
                                         <li className="navbar-item">
                                             <Link to ='/Home' className='nav-link'>Home</Link>
-                                        </li>
-                                        <li className='navbar-item'>
-                                            <Link to={{pathname:"/RequsetAggre" ,aboutProps:{User:props.User}}} className="nav-link">Aggregate Request</Link>
                                         </li>
                                         <li className='navbar-item'>
                                             <Link to={{pathname:"/RequsetSvm" ,aboutProps:{User:props.User}}} className="nav-link">Svm Request </Link>
@@ -69,7 +72,7 @@ function Navbar(props){
                                             </Link>
                                         </li>  
                                         <li className='navbar-item'>
-                                            <Link to ='/SignIn' onClick={()=>{props.setUser('')}} className='nav-link'>logout</Link>
+                                        <button onClick={logout} className='nav-link btn btn-dark'>Logout</button>
                                         </li>    
                                     </ul>
                                     </>

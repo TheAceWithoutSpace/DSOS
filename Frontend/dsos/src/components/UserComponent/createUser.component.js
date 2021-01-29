@@ -58,25 +58,25 @@ class createUser extends Component{
             Team:this.state.Team,
         }
 
-        axios.post('http://localhost:3000/users/add',user)
-            .then(res=>{
-                axios.post("http://localhost:3000/MonthDateRoute/add")
+        axios.post('users/add',user)
+            .then(async res=>{
                 let ts=Date.now()
                 let date_ob = new Date(ts);
                 let day= date_ob.getDate();
                 let month = date_ob.getMonth() + 1;
                 let year = date_ob.getFullYear();
-                axios.post(`http://localhost:3000/MonthDateRoute/users/${day}.${month}.${year}`)
+                await axios.post(`MonthDateRoute/users/${month}-${day}-${year}`)
+                .then((res)=>{console.log(res)})
                 if(res.data)
                 {
-                this.props.Auth(res.data);
+                localStorage.setItem('user', JSON.stringify(res.data));
                 console.log(res.data)
                 if(res.data.Admin){
-                    this.props.history.push("/admin");
+                   window.location.href="/admin";
                 }else if(res.data.Architect){
-                    this.props.history.push("/Architect");
+                    window.location.href="/Architect";
                 }else{
-                    this.props.history.push("/Home");
+                    window.location.href="/Home";
                 }
                 }
             })

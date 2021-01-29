@@ -9,8 +9,15 @@
     line-height: 3.5;
 }
 .jumbotron{
-    background-image:url("https://img.wcdn.co.il/f_auto,w_1200,t_54/2/6/9/6/2696946-46.jpg");
+    background-image:url("https://www.stratospherenetworks.com/blog/wp-content/uploads/2017/03/servers.jpg");
     background-size: 100% 100%;
+}
+#text-h{
+    color:GhostWhite
+}
+#text{
+    font-size:20px;
+    color:GhostWhite;
 }
 .text{
     font-size:20px;

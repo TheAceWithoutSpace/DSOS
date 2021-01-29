@@ -43,10 +43,10 @@ class ReportBug extends Component{
         this.onclicked();
         const FileID=await this.upload(this.state.File);
         console.log(FileID);
-        const Request={
-            userID:this.props.location.aboutProps.User,
-            username:this.props.location.aboutProps.User.username,
-            email:this.props.location.aboutProps.User.email,
+        const BugRep={
+            userID:this.props.location.aboutProps.User._id,
+            username:this.props.location.aboutProps.User.U,
+            email:this.props.location.aboutProps.User.E,
             Description:this.state.Description,
             File:FileID,
             status:'pending'
@@ -56,9 +56,9 @@ class ReportBug extends Component{
         let day= date_ob.getDate();
         let month = date_ob.getMonth() + 1;
         let year = date_ob.getFullYear();
-        axios.post('http://localhost:3000/Bug/add',Request)
-            .then(res=>{
-                axios.post(`http://localhost:3000/MonthDateRoute/bugReports/${day}.${month}.${year}`)
+        axios.post('Bug/add',BugRep)
+            .then(async ()=>{
+                await axios.post(`MonthDateRoute/bugReports/${month}-${day}-${year}`)
                 this.setState({message:"Request send"})
                 this.props.history.push("/Home");
             })
@@ -71,15 +71,12 @@ class ReportBug extends Component{
         if(e)
         {
             try{
-                  const res=await axios.post('http://localhost:3000/File/upload',formData,{
+                  const res=await axios.post('File/upload',formData,{
                     headers:{
                       'content-Type':'multipart/form-data'
                     },
                     onUploadProgress:ProgressEvent=>{
-                        for (let i=((ProgressEvent.total/100)*56);i<ProgressEvent.total;i+=ProgressEvent.total/100)
-                        {
-                            this.setState({uploadPercentage:(parseInt((i*100)/ProgressEvent.total))});
-                        }
+                        this.setState({uploadPercentage:(parseInt((ProgressEvent.loaded/ProgressEvent.total)*100))});
                     }
                   });
                   return(res.data.file.filename);
@@ -95,7 +92,7 @@ class ReportBug extends Component{
                 {this.state.message?<Message msg={this.state.message}/>:''}
                 <div className="row">
                     <div className="col-md-6 m-auto">
-                    <h3 className="text-center display-4 my-4">Request</h3>
+                    <h3 className="text-center display-4 my-4">Bug Report</h3>
             <form onSubmit={this.onsubmit}>
                 <div className="form-group  mb-3">
                     <label>Description:</label>

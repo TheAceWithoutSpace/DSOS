@@ -35,17 +35,18 @@ class Login extends Component{
         }
 
         // checking if the user username and password is the sane as saved as in the db
-        axios.post('http://localhost:3000/users/login',User)
+        axios.post('users/login',User)
             .then(res=>{
                 if(res.data)
-                {   console.log(res.data[0])
-                    this.props.Auth(res.data[0])
-                    if(res.data[0].Admin){
-                        this.props.history.push("/admin");
-                    }else if(res.data[0].Architect){
-                        this.props.history.push("/Architect");
+                {  
+                    localStorage.setItem('user', JSON.stringify(res.data));
+                    console.log(res.data)
+                    if(res.data.A){
+                        window.location.href="/admin";
+                    }else if(res.data.Ar){
+                        window.location.href="/Architect";
                     }else{
-                        this.props.history.push("/Home");
+                        window.location.href="/Home";
                     }
                 }
             })

@@ -11,6 +11,7 @@ class createRequest extends Component{
         super(props);
         this.onChangeVolume=this.onChangeVolume.bind(this);
         this.setSelectedFile=this.setSelectedFile.bind(this);
+        this.handleChangeCluster=this.handleChangeCluster.bind(this);
         this.onChangeAmount=this.onChangeAmount.bind(this);
         this.onclicked=this.onclicked.bind(this);
         this.handleChangeSvm=this.handleChangeSvm.bind(this);
@@ -26,7 +27,9 @@ class createRequest extends Component{
             uploadPercentage:0,
             message:'',
             Svm:'',
+            Cluster:'',
             Aggregate:'',
+            location:'',
             AggregateArray:'',
             SvmArray:'',
             flag:false,
@@ -34,7 +37,7 @@ class createRequest extends Component{
         }
     }
     componentDidMount(){
-        axios.get('http://localhost:3000/AGGREGATE/')
+        axios.get('Aggregate/')
         .then((res)=>this.setState({AggregateArray:res.data}))
     }
 
@@ -62,11 +65,16 @@ class createRequest extends Component{
     }
     handleChangeAggregate(e){
         this.setState({
-            Aggregate:e.target.value
+            Aggregate:this.state.AggregateArray[e.target.value].name,
+            location:this.state.AggregateArray[e.target.value].location
         })
-        axios.get(`http://localhost:3000/SvmRoute/SvmByAggreName/${e.target.value}`)
-        .then((res)=>{console.log(res.data.Req)
-            this.setState({SvmArray:res.data.Req})})
+        console.log(this.state.AggregateArray[e.target.value].name)
+        axios.get(`SvmRoute/SvmByAggreName/${this.state.AggregateArray[e.target.value].name}`)
+        .then((res)=>{console.log(res.data)
+            this.setState({SvmArray:res.data})})
+    }
+    handleChangeCluster(e){
+
     }
     onclicked(e){
         this.setState({flag:true})
@@ -77,13 +85,15 @@ class createRequest extends Component{
         this.onclicked();
         const FileID=await this.upload(this.state.File);
         console.log(FileID);
+        // const User=JSON.parse(localStorage.getItem('user'));
         const Request={
-            userID:this.props.location.aboutProps.User,
-            username:this.props.location.aboutProps.User.username,
-            email:this.props.location.aboutProps.User.email,
-            Name:{A:this.state.Aggregate,S:this.state.Svm,V:this.state.volume},
+            userID:JSON.parse(localStorage.getItem('user'))._id,
+            username:JSON.parse(localStorage.getItem('user')).U,
+            email:JSON.parse(localStorage.getItem('user')).E,
+            Name:{C:this.state.Cluster,A:this.state.Aggregate,S:this.state.Svm,V:this.state.volume},
             Amount:this.state.Amount,
             File:FileID,
+            Location:this.state.location,
             status:'pending',
             type:'volume'
         }
@@ -94,9 +104,9 @@ class createRequest extends Component{
         let day= date_ob.getDate();
         let month = date_ob.getMonth() + 1;
         let year = date_ob.getFullYear();
-        axios.post('http://localhost:3000/Request/add',Request)
-            .then(res=>{
-                axios.post(`http://localhost:3000/MonthDateRoute/StorageRequests/${day}.${month}.${year}`)
+        await axios.post('Request/add',Request)
+            .then(async(res)=>{
+                await axios.post(`MonthDateRoute/StorageRequests/${month}-${day}-${year}`)
                 this.setState({message:"Request send"})
                 this.props.history.push("/Home");
             })
@@ -109,16 +119,12 @@ class createRequest extends Component{
         if(e)
         {
             try{
-                  const res=await axios.post('http://localhost:3000/File/upload',formData,{
+                  const res=await axios.post('File/upload',formData,{
                     headers:{
                       'content-Type':'multipart/form-data'
                     },
                     onUploadProgress:ProgressEvent=>{
-                        for (let i=0;i<ProgressEvent.total;i+=ProgressEvent.total/100)
-                        {
-                            console.log()
-                            this.setState({uploadPercentage:(parseInt((i*100)/ProgressEvent.total))});
-                        }
+                        this.setState({uploadPercentage:(parseInt((ProgressEvent.loaded/ProgressEvent.total)*100))});
                     }
                   });
                   return(res.data.file.filename);
@@ -127,14 +133,29 @@ class createRequest extends Component{
           }
         }
     }
+    listCluster(){
+
+    }
     Aggrelist(){
         if(this.state.AggregateArray)
         {
             return(
-                this.state.AggregateArray.map((CurrentAggre)=>{
-                    return(
-                        <option key={CurrentAggre._id} value={CurrentAggre.name}>{CurrentAggre.name}</option>
-                    )}
+                this.state.AggregateArray.map((CurrentAggre,index)=>{
+                    if(CurrentAggre.Amount===0)
+                        {   
+                            return(
+                            <option key={CurrentAggre._id} value={index} >
+                                Name:{CurrentAggre.name}--Location:{CurrentAggre.location}--Free:100%
+                            </option>
+                            )
+                        }else{
+                            return(
+                                <option key={CurrentAggre._id} value={index}>Name:{CurrentAggre.name}--
+                                Location:{CurrentAggre.location}--Free:{((CurrentAggre.Amount/CurrentAggre.TotalAmount)*-100)+100}%
+                                </option>
+                                )
+                        }
+                    }
                 ))
         }
         else{return null}
@@ -176,7 +197,7 @@ class createRequest extends Component{
                 <div className="form-group mb-3">
                 <div>
                     <div className='custom-file mb-4'>
-                        <input type="file" className='custom-file-input' id='customFile' onChange={this.setSelectedFile}/>
+                        <input type="file" className='custom-file-input' id='customFile' required onChange={this.setSelectedFile}/>
                         <label className='custom-file-label' htmlFor='customFile'>
                         {this.state.File.name}
                         </label>
@@ -185,15 +206,24 @@ class createRequest extends Component{
                     </div>
                 </div>
                 <div className="form-group">
+                    <label>Cluster Name:</label>
+                    <select className="custom-select" required value={this.state.Cluster} onChange={this.handleChangeCluster}>
+                        <option disabled defaultValue value={''}> -- select an option -- </option>
+                            {this.listCluster()}
+                    </select>
+                </div>
+                <div className="form-group">
                     <label>Aggregate Name:</label>
-                    <select value={this.state.Aggregate} onChange={this.handleChangeAggregate}>
+                    <select className="custom-select" required value={this.state.Aggregate} onChange={this.handleChangeAggregate}>
                         <option disabled defaultValue value={''}> -- select an option -- </option>
                             {this.Aggrelist()}
                     </select>
                 </div>
+                {this.state.SvmArray?
+                <>
                 <div className="form-group">
                     <label>Svm Name:</label>
-                    <select value={this.state.Svm} onChange={this.handleChangeSvm}>
+                    <select className="custom-select" required value={this.state.Svm} onChange={this.handleChangeSvm}>
                         <option disabled defaultValue value={''}> -- select an option -- </option>
                         {this.Svmlist()}
                     </select>
@@ -208,7 +238,10 @@ class createRequest extends Component{
                     Loading...
                 </button>
                 }
-
+                </>
+                :
+                <input type="text" readOnly className="form-control-plaintext" id="staticEmail" value="you most chose Aggregate" />
+                }
             </form>
                     </div>
                 </div>

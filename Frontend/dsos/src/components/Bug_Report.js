@@ -5,38 +5,47 @@ import AdminCompNav from "./AdminCompNav"
 class Bug_report extends Component{
     constructor(props){
         super(props);
-        this.state={Bugs:[],reload:0,Treload:1}
+        this.state={Bugs:[],reload:0,Treload:1,Tflag:false}
     }
     componentDidMount(){
-        axios.get(`http://localhost:3000/Bug/`)
-        .then((res)=>{this.setState({Bugs:res.data})})
+        axios.get(`Bug/`)
+        .then((res)=>{
+            console.log(res)
+            if(!res.data.err)
+            {
+                this.setState({Bugs:res.data,Tflag:true})
+            }
+        })
     }
-    UptateStatus(status){
+    async UptateStatus(status){
         const Status={status:status.s};
-        axios.post(`http://localhost:3000/Bug/status/${status.id}`,Status)
-        .then(axios.get(`http://localhost:3000/Bug/`)
-            .then((res)=>{this.setState({Bugs:res.data})}))
+        console.log(status)
+        axios.post(`Bug/status/${status.id}`,Status)
+            .then(async()=>await window.location.reload())
     }
     BugTable(){
-        return this.state.Bugs.map(CurrentBug=>{
+        return this.state.Bugs.map((CurrentBug,index)=>{
             const status=CurrentBug.status;
-            const downloadURI=`http://localhost:3000/File/${CurrentBug.File}`;
+            const downloadURI=`File/${CurrentBug.File}`;
             return((status==="pending")?
                         <tr key={CurrentBug._id}>
-                            <td>{CurrentBug._id}</td>
+                            <td>{index+1}</td>
                             <td>{CurrentBug.username}</td>
                             <td>{CurrentBug.email}</td>
                             <td>{CurrentBug.Description}</td>
                             {CurrentBug.File? <td><a href={downloadURI} className="btn btn-success" download>download</a></td>:<td></td>}
                             <td><button onClick={()=>this.UptateStatus({s:'Complited',id:CurrentBug._id})}className="btn btn-outline-info">Complited</button></td>
-                        </tr>:<tr>
+                        </tr>:<tr key={CurrentBug._id}>
                                 <td><del>{CurrentBug._id}</del></td>
                                 <td><del>{CurrentBug.username}</del></td>
                                 <td><del>{CurrentBug.email}</del></td>
                                 <td><del>{CurrentBug.Description}</del></td>
                                 {CurrentBug.File? <td>
                                     <del><a href={downloadURI} className="btn btn-success" download>download</a></del></td>:<td></td>}
-                                <td><button onClick={()=>this.UptateStatus({s:'pending',id:CurrentBug._id})}className="btn btn-outline-warning">Undo</button></td>
+                                <td>
+                                    <button onClick={()=>this.UptateStatus({s:'pending',id:CurrentBug._id})}className="btn btn-outline-warning">Undo</button>
+                                    |<button onClick={()=>axios.delete(`Bug/${CurrentBug._id}`).then(async()=>{await window.location.reload()})}className="btn btn-outline-danger">delete</button>
+                                </td>
                             </tr>)
                     })
                 }
@@ -57,6 +66,7 @@ class Bug_report extends Component{
                                 </svg>{" Bug Reports"}
                             </h1>  
                         </div>
+                        {this.state.Tflag?
                         <div className="row d-flex justify-content-center">
                             <div className="col-md-11">
                                 <div className="table-responsive ">
@@ -77,7 +87,12 @@ class Bug_report extends Component{
                                     </table>
                                 </div>
                             </div>
-                        </div>
+                        </div>:
+                        <div className="d-flex justify-content-center">
+                            <div className="spinner-border" role="status">
+                                <span className="sr-only">Loading...</span>
+                            </div>
+                        </div>}
                     </main>
                 </div>
             </div>

@@ -7,7 +7,6 @@ import AdminCompNav from'../components/AdminCompNav'
 import 'react-dates/lib/css/_datepicker.css';
 import { DateRangePicker} from 'react-dates';
 
-
 class Admin extends Component{
     constructor(props){
         super(props);
@@ -21,6 +20,7 @@ class Admin extends Component{
             endDate:null,
             flag:true,
             chartTitle:'',
+            OldEndDate:'',
         }
     }
 
@@ -31,13 +31,39 @@ class Admin extends Component{
             let users=[];
             let aggre=[];
             let labels=[];
-           
+            let FirestDay=false;
             this.state.days.forEach(day=>{
-                labels.push(day.Date[0]+day.Date[1])
-                StorageRequests.push(parseInt((day.StorageRequests/this.state.Requsts)*100));
-                bugReports.push(parseInt((day.bugReports/this.state.Bugs)*100));
-                users.push(parseInt((day.users/this.state.Users)*100));
-                aggre.push(parseInt((day.AggreStorageUsegeAmmount/day.AggreStorageTotal)*100));     
+                if(new Date(day.Date).getUTCDay()!==0)
+                {   
+                    let DayLabel=parseInt(day.Date[8]+day.Date[9])+1;
+                    if(FirestDay===false)
+                    {
+                        FirestDay=true;
+                        labels.push(1)
+                    }else{
+                    labels.push(DayLabel)
+                    }
+                    if(day.StorageRequests===0){
+                        StorageRequests.push(0);
+                    }else{
+                        StorageRequests.push(parseInt((day.StorageRequests/this.state.Requsts)*100));
+                    }
+                    if(day.bugReports===0){
+                        bugReports.push(0);
+                    }else{
+                        bugReports.push(parseInt((day.bugReports/this.state.Bugs)*100));
+                    }
+                    if(day.users===0){
+                        users.push(0);
+                    }else{
+                        users.push(parseInt((day.users/this.state.Users)*100));
+                    }
+                    if(day.AggreStorageUsegeAmmount===0||day.AggreStorageTotal===0){
+                        aggre.push(0)
+                    }else{
+                        aggre.push(parseInt((day.AggreStorageUsegeAmmount/day.AggreStorageTotal)*100));
+                    }
+                }
             })
         return({
             chartData:{
@@ -78,53 +104,85 @@ class Admin extends Component{
         let Bugs=0;
         let Total=0;
         let Amount=0;
-        let chartTitle='';
-        let days;
         let ts=Date.now()
         let date_ob = new Date(ts);
         let month = date_ob.getMonth() + 1;
         let year = date_ob.getFullYear();
         let Sd = new Date(this.state.startDate);
-        let StartDate=(Sd.getDate())+'.'+(Sd.getMonth() + 1)+'.'+Sd.getFullYear();
+        let StartDate=((Sd.getMonth() + 1)+'-'+Sd.getDate())+'-'+Sd.getFullYear();
         let Ed = new Date(this.state.endDate);
-        let EndDate =(Ed.getDate()+1)+'.'+(Ed.getMonth() + 1)+'.'+Ed.getFullYear();
+        let EndDate =((Ed.getMonth()+1)+'-'+Ed.getDate())+'-'+Ed.getFullYear();
+        console.log(StartDate +'||'+EndDate)
         if(this.state.startDate!==null&&this.state.endDate!==null)
         {
-            await axios.get(`http://localhost:3000/MonthDateRoute/range/${StartDate}/${EndDate}`)
+            await axios.get(`MonthDateRoute/range/${StartDate}/${EndDate}`)
             .then((res)=>{
-                days=res.data
-                chartTitle=`${StartDate} / ${EndDate}`
+                console.log(res.data)
+                    res.data.forEach(day=>{
+                        Users+=day.users;
+                        Requsts+=day.StorageRequests;
+                        Bugs+=day.bugReports;
+                        Total+=day.AggreStorageTotal;
+                        Amount+=day.AggreStorageUsegeAmmount;
+                    });
+                    this.setState({
+                        Users:Users,
+                        chartTitle:`${StartDate} / ${Ed.getDate()+'.'+(Ed.getMonth() + 1)+'.'+Ed.getFullYear()}`,
+                        Requsts:Requsts,
+                        Bugs:Bugs,
+                        days:res.data,
+                        Aggregates:{Total:Total,Amount:Amount},
+                    })
             })
         }else{
-            await axios.get(`http://localhost:3000/MonthDateRoute/Month/${month}.${year}`)
+            await axios.get(`MonthDateRoute/Month/${month}.${year}`)
             .then((res)=>{
-                days=res.data.Req
-                chartTitle=`${month}.${year}`
+                    console.log(res.data)
+                    res.data.forEach(day=>{
+                        Users+=day.users;
+                        Requsts+=day.StorageRequests;
+                        Bugs+=day.bugReports;
+                        Total+=day.AggreStorageTotal;
+                        Amount+=day.AggreStorageUsegeAmmount;
+                    });
+                    this.setState({
+                        Users:Users,
+                        chartTitle:`${month}.${year}`,
+                        Requsts:Requsts,
+                        Bugs:Bugs,
+                        days:res.data,
+                        Aggregates:{Total:Total,Amount:Amount}
+                    })
             })
         }
-        days.forEach(day=>{
-            Users+=day.users;
-            Requsts+=day.StorageRequests;
-            Bugs+=day.bugReports;
-            Total+=day.AggreStorageTotal;
-            Amount+=day.AggreStorageUsegeAmmount;
-        });
-        this.setState({
-            Users:Users,
-            chartTitle:chartTitle,
-            Requsts:Requsts,
-            Bugs:Bugs,
-            days:days,
-            Aggregates:{Total:Total,Amount:Amount}
-        })
+
     }
-    CalcAggre(){
-        if(this.state.Aggregates)
-        {
-            return(<>{parseInt((this.state.Aggregates.Amount/this.state.Aggregates.Total)*100)}%</>)        
+    CalcPresentage(a,b){
+        console.log(a+'||'+b)
+        if(a!==0&&b!==0){
+            if(a>b){
+                return(
+                    <span className="text-danger mr-2">
+                        {parseInt((a/b)*-100 )+'%'}    
+                    </span>
+                )
+            }else{
+                return(
+                    <span className="text-success mr-2">
+                        {parseInt((a/b)*100 )+'%'} 
+                    </span>
+                )
+            }
+        }else if(a===0&&b!==0){
+            return('100%')
         }else{
-            return(<> Loading</>)
+            return ('0%')
         }
+    }
+    DateToDate(){
+        let date=new Date(this.state.days[0].Date);
+        let ToDate=new Date(this.state.days[this.state.days.length-1].Date);
+        return(date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear()+' - '+ToDate.getDate()+'/'+(ToDate.getMonth()+1)+'/'+ToDate.getFullYear());
     }
     componentDidMount(){
         this.dataAsamble()
@@ -138,30 +196,36 @@ class Admin extends Component{
     }
 
 render(){
-    return(
-    <div className="">
+    const Ur=JSON.parse(localStorage.getItem('user'));
+    console.log(this.state.days)
+    if(this.state.days[0]){
+    let date=new Date(this.state.days[0].Date);
+    console.log(date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear());
+    }return(
+    <div>
+        {Ur.A?null:window.location.href = '/UKnoob'}
     <div className="cuntiner-fluid ">
         <div className="row">
             <div id="sidebarMenu" className="col-md-2 col-lg-2 d-md-block sidebar collapse">
-                <AdminCompNav User={this.props.User}/>
+                <AdminCompNav />
             </div>
             <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-md-4 bg-white">
+            {this.state.days[0]?<>
                 <div className="chartjs-size-monitor" style={{positon: 'absolute',left: '0px', top: '0px', right: '0px', bottom: '0px', overflow: 'hidden', visibility: 'hidden'}}></div>
                     <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h1 className="h2">Dashboard</h1>
-                        <div className='btn-toolbar mb-2 mb-md-0 pr-5'>
-                        
-                        <DateRangePicker
-                        startDate={this.state.startDate} // momentPropTypes.momentObj or null,
-                        startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
-                        endDate={this.state.endDate} // momentPropTypes.momentObj or null,
-                        endDateId="your_unique_end_date_id" // PropTypes.string.isRequired,
-                        onDatesChange={({ startDate, endDate}) => this.setState({ startDate, endDate,flag:true})} // PropTypes.func.isRequired,
-                        focusedInput={this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
-                        isOutsideRange={date => date.isBefore(new Date(2020, 9, 24)) || date.isAfter(new Date())}
-                        onFocusChange={focusedInput => this.setState({ focusedInput })} // PropTypes.func.isRequired,
-                        />
-                        </div>
+                            <div className='btn-toolbar mb-2 mb-md-0 pr-5'>
+                                <DateRangePicker
+                                startDate={this.state.startDate} // momentPropTypes.momentObj or null,
+                                startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
+                                endDate={this.state.endDate} // momentPropTypes.momentObj or null,
+                                endDateId="your_unique_end_date_id" // PropTypes.string.isRequired,
+                                onDatesChange={({ startDate, endDate}) => this.setState({ startDate, endDate,flag:true})} // PropTypes.func.isRequired,
+                                focusedInput={this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
+                                isOutsideRange={date => date.isBefore(new Date(2020, 10, 1)) || date.isAfter(new Date())}
+                                onFocusChange={focusedInput => this.setState({ focusedInput })} // PropTypes.func.isRequired,
+                                />
+                            </div>
                     </div>
                     <div className="row">
                         <div className="col-xl-6 col-lg-5">
@@ -179,22 +243,13 @@ render(){
                                             </h5>
                                             <h3 className="mt-3 mb-3 ">{this.state.Users}</h3>
                                             <p className="mb-0 text-muted">
-                                                {this.state.days[0]?
-                                                <>
-                                                {this.state.days[0].users>this.state.days[this.state.days.length-1].users
-                                                ?
-                                                <span className="text-danger mr-2">
-                                                    {parseInt((this.state.days[0].users/this.state.days[this.state.days.length-1].users)*-100 )+'%'}
-                                                </span>
-                                                :
-                                                <span className="text-success mr-2">
-                                                    {parseInt((this.state.days[0].users/this.state.days[this.state.days.length-1].users)*100) +'%'}
-                                                </span>
-                                                }
+                                                {this.state.days.length-1?<>
+                                                {this.CalcPresentage(this.state.days[0].users,this.state.days[this.state.days.length-1].users)}
+                                                </>:<>{this.CalcPresentage(this.state.days[0].users,0)}</>}
                                                 <span className="text-nowrap">
-                                                    {this.state.days[0].Date+'/'+this.state.days[this.state.days.length-1].Date}
+                                                <br/>
+                                                {this.DateToDate()}
                                                 </span>
-                                                </>:null}
                                             </p>
                                         </div>
                                     </div>
@@ -212,28 +267,12 @@ render(){
                                             </svg>
                                                 {" Storage"}
                                             </h5>
-                                            <h3 className="mt-3 mb-3">{this.CalcAggre()}</h3>
+                                            <h3 className="mt-3 mb-3">{this.CalcPresentage(this.state.Aggregates.Amount,this.state.Aggregates.Total)}</h3>
                                             <p className="mb-0 text-muted">
-                                            {this.state.days[0]?
-                                                <>
-                                                {((this.state.days[0].AggreStorageUsegeAmmount/this.state.days[0].AggreStorageTotal)*100)>
-                                                ((this.state.days[this.state.days.length-1].AggreStorageUsegeAmmount/this.state.days[this.state.days.length-1].AggreStorageTotal)*100)
-                                                ?
-                                                <span className="text-danger mr-2">
-                                                    {parseInt((((this.state.days[0].AggreStorageUsegeAmmount/this.state.days[0].AggreStorageTotal)*100)-
-                                                ((this.state.days[this.state.days.length-1].AggreStorageUsegeAmmount/this.state.days[this.state.days.length-1].AggreStorageTotal)*100))*-1)+'%'}
-                                                </span>
-                                                :
-                                                <span className="text-success mr-2">
-                                                    {parseInt((((this.state.days[0].AggreStorageUsegeAmmount/this.state.days[0].AggreStorageTotal)*100)-
-                                                ((this.state.days[this.state.days.length-1].AggreStorageUsegeAmmount/this.state.days[this.state.days.length-1].AggreStorageTotal)*100))*-1)+'%'}
-                                                </span>
-                                                }
                                                 <span className="text-nowrap">
-                                                    {this.state.days[0].Date+'/'+this.state.days[this.state.days.length-1].Date}
+                                                <br/>
+                                                {this.DateToDate()}
                                                 </span>
-                                                </>:null}
-
                                             </p>
                                         </div>
                                     </div>
@@ -255,22 +294,13 @@ render(){
                                             </h5>
                                             <h3 className="mt-3 mb-3">{this.state.Requsts}</h3>
                                             <p className="mb-0 text-muted">
-                                            {this.state.days[0]?
-                                                <>
-                                                {this.state.days[0].StorageRequests>this.state.days[this.state.days.length-1].StorageRequests
-                                                ?
-                                                <span className="text-danger mr-2">
-                                                    {parseInt((this.state.days[0].StorageRequests/this.state.days[this.state.days.length-1].StorageRequests)*-100 )+'%'}
-                                                </span>
-                                                :
-                                                <span className="text-success mr-2">
-                                                    {parseInt((this.state.days[0].StorageRequests/this.state.days[this.state.days.length-1].StorageRequests)*100) +'%'}
-                                                </span>
-                                                }
+                                                {this.state.days.length-1?<>
+                                                {this.CalcPresentage(this.state.days[0].StorageRequests,this.state.days[this.state.days.length-1].StorageRequests)}
+                                                </>:<>{this.CalcPresentage(this.state.days[0].StorageRequests,0)}</>}   
                                                 <span className="text-nowrap">
-                                                    {this.state.days[0].Date+'/'+this.state.days[this.state.days.length-1].Date}
+                                                <br/>
+                                                {this.DateToDate()}
                                                 </span>
-                                                </>:null}
                                             </p>
                                         </div>
                                     </div>
@@ -289,24 +319,13 @@ render(){
                                             </h5>
                                             <h3 className="mt-3 mb-3">{this.state.Bugs}</h3>
                                             <p className="mb-0 text-muted">
-                                            
-                                            {this.state.days[0]?
-                                                <>
-                                                {this.state.days[0].bugReports>this.state.days[this.state.days.length-1].bugReports
-                                                ?
-                                                <span className="text-danger mr-2">
-                                                    {parseInt((this.state.days[0].bugReports/this.state.days[this.state.days.length-1].bugReports))*-100 +'%'}
-                                                </span>
-                                                :
-                                                <span className="text-success mr-2">
-                                                    {parseInt((this.state.days[0].bugReports/this.state.days[this.state.days.length-1].bugReports)*100) +'%'}
-                                                </span>
-                                                }
+                                                {this.state.days.length-1?<>
+                                                {this.CalcPresentage(this.state.days[0].bugReports,this.state.days[this.state.days.length-1].bugReports)}
+                                                </>:<>{this.CalcPresentage(this.state.days[0].bugReports,0)}</>}                   
                                                 <span className="text-nowrap">
-                                                    {this.state.days[0].Date+'/'+this.state.days[this.state.days.length-1].Date}
+                                                <br/>
+                                                {this.DateToDate()}
                                                 </span>
-                                                </>:null}
-
                                             </p>
                                         </div>
                                     </div>
@@ -325,6 +344,12 @@ render(){
                             </div>
                         </div>
                     </div>
+                </>
+                :<div className="d-flex justify-content-center">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="sr-only">Loading...</span>
+                    </div>
+                </div>}
             </main>
         </div>
     </div>

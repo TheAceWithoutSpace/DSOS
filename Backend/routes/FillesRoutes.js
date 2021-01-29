@@ -6,9 +6,9 @@ const GridFsStorage=require('multer-gridfs-storage');
 const Grid=require('gridfs-stream');
 const crypto=require("crypto");
 
-const mongoURI="mongodb+srv://ben78901:69zu9b3k@cluster0.tl2pj.mongodb.net/<dbname>?retryWrites=true&w=majority";
+
 //connection to the db 
-const conn=mongoose.createConnection(mongoURI, {
+const conn=mongoose.createConnection(process.env.DB_connection, {
     useUnifiedTopology: true,
     useNewUrlParser: true,
   });
@@ -20,7 +20,7 @@ conn.once('open',()=>{
 })
 //File Schima 
 const storage = new GridFsStorage({
-    url: mongoURI,
+    url: process.env.DB_connection,
     file: (req, file) => {
       return new Promise((resolve, reject) => {
         //@createing a random 16 bytes name for the file
@@ -47,7 +47,7 @@ router.route("/upload").post(upload.single('file'),(req,res,)=>{
 });
 //get All Filles
 router.route('/').get((req,res)=>{
-    console.log('all files')
+    
     gfs.files.find().toArray((err,files)=>{
         if(!files||files.length===0){
             return res.status(404).json({
@@ -59,7 +59,7 @@ router.route('/').get((req,res)=>{
 });
 //get a file by filename(filename is a uniq string)
 router.route('/:filename').get((req, res) => {
-  gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
+  gfs.files.findOne({ filename: req.params.filename },(err, file) => {
     // Check if file
     if (!file || file.length === 0) {
       return res.status(404).json({

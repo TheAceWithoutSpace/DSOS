@@ -2,18 +2,46 @@ const mongoose = require("mongoose");
 const Schema= mongoose.Schema;
 
 const SvmSchema=new Schema({
-    name:{
+    Cluster:{
+        type:String,
+        required:true,
+        },
+    env:{
+        type:String,
+        required:true
+    },
+    aggregate:{
+        type:String,
+        required:true
+    },
+    Name:{
         type:String,
         required:true,
         unique:true
-        },
-    Amount:{
+    },
+    total:{
         type:Number,
         required:true
     },
-    AGGREGATE:{
-        type:String,
+    used:{
+        type:Number,
         required:true
+    },
+    available:{
+        type:Number,
+        required:true   
+    },
+    full:{
+        type:Number,
+        required:true  
+    },
+    dedupeCapSaved:{//data protection 
+        type:Number,
+        required:true  
+    },
+    VolumeCount:{
+        type:Number,
+        required:true  
     },
     date: { type: Date, default: Date.now },
 },{

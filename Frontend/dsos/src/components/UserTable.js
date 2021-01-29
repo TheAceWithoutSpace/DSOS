@@ -6,25 +6,51 @@ class Bug_report extends Component{
     constructor(props){
         super(props);
         this.state={
-            Users:[]
+            Users:[],
+            Tflag:false
         }
     }
-    componentDidMount()
-    {
-        axios.get("http://localhost:3000/users/")
-        .then((res)=>this.setState({Users:res.data}));
+    async componentDidMount()
+    {   
+        let admins=[];
+        let Architects=[];
+        let users=[];
+        await axios.get("users/")
+        .then((res)=>{
+            console.log(res.data)
+            res.data.forEach(user => 
+            {
+                if(user.Admin)
+                {
+                    admins.push(user)
+                }
+                else if(user.Architect)
+                {
+                    Architects.push(user)
+                }else{
+                    users.push(user)
+                }
+            })
+            Architects.forEach(Architect=>{
+                admins.push(Architect)
+            })
+            users.forEach(user=>{
+                admins.push(user);
+            })
+            this.setState({Users:admins,Tflag:true})
+        })
     }
-    PromoteToArchitect(data){
-         let Architect={Architect:data.Architect}
-        axios.post(`http://localhost:3000/users/Architect/${data.id}`,Architect)
-        .then(()=>axios.get("http://localhost:3000/users/")
-                .then((res)=>this.setState({Users:res.data})))
+    async PromoteToArchitect(data){
+        let Architect={Architect:data.Architect}
+        await axios.post(`users/Architect/${data.id}`,Architect)
+        window.location="/Users"
     }
     UserTable(){
-        return this.state.Users.map(currentUser=>{
+        return this.state.Users.map((currentUser,index)=>{
             if(currentUser.Admin){
                 return(
                     <tr key={currentUser._id} className="table-primary">
+                        <td>{index+1}</td>
                         <td>{currentUser._id}</td>
                         <td>
                             <svg width="1.5em" height="1em" viewBox="0 0 16 16" className="bi bi-star-fill" fill="rgba(219, 190, 70, 0.72)" xmlns="http://www.w3.org/2000/svg">
@@ -40,25 +66,29 @@ class Bug_report extends Component{
             }else if(currentUser.Architect){
                 return(
                     <tr key={currentUser._id} style={{backgroundColor:"rgb(253, 251, 220)"}}>
+                        <td>{index+1}</td>
                         <td>{currentUser._id}</td>
                         <td>{currentUser.username}</td>
                         <td>{currentUser.email}</td>
                         <td>{currentUser.Nickname}</td>
                         <td>{currentUser.Team}</td>
+                        <td>
                         <button onClick={()=>this.PromoteToArchitect({Architect:false,id:currentUser._id})}
-                        className="btn btn-outline-danger">deomote to User</button>
+                        className="btn btn-outline-danger">deomote to User</button></td>
                     </tr>
                     )       
                 }else{
                     return(
                         <tr key={currentUser._id} style={{backgroundColor:"rgba(220, 253, 234, 0.51)"}}>
+                            <td>{index+1}</td>
                             <td>{currentUser._id}</td>
                             <td>{currentUser.username}</td>
                             <td>{currentUser.email}</td>
                             <td>{currentUser.Nickname}</td>
                             <td>{currentUser.Team}</td>
+                            <td>
                             <button onClick={()=>this.PromoteToArchitect({Architect:true,id:currentUser._id})}
-                            className="btn btn-outline-info">promote to Architect</button>
+                            className="btn btn-outline-info">promote to Architect</button></td>
                         </tr>
                     )
                 }
@@ -81,6 +111,7 @@ class Bug_report extends Component{
                                 {" Users"}
                             </h1>  
                         </div>
+                        {this.state.Tflag?
                         <div className="row d-flex justify-content-center">
                             <div className="col-md-11">
                             <div className="table-responsive ">
@@ -88,6 +119,7 @@ class Bug_report extends Component{
                                         <thead style={{backgroundColor:"rgba(20, 16, 200, 0.20)"}}>
                                             <tr>
                                                 <th scope="col">NUMBER</th>
+                                                <th scope="col">User_Id</th>
                                                 <th scope="col">Username</th>
                                                 <th scope="col">email</th>
                                                 <th scope="col">nickname</th>
@@ -101,7 +133,13 @@ class Bug_report extends Component{
                                     </table>
                                 </div>
                             </div>
-                        </div>
+                        </div>:
+                        <div className="d-flex justify-content-center">
+                            <div className="spinner-border" role="status">
+                                <span className="sr-only">Loading...</span>
+                            </div>
+                         </div>
+                        }
                     </main>
                 </div>
             </div>
