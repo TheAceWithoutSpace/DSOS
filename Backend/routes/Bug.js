@@ -1,62 +1,57 @@
 const router = require('express').Router();
-const { response } = require('express');
-const Bug = require('../models/Bug.model');
-const Helperfunctions =require('./HelperFunctions');
+const { ObjectId } = require('mongodb');
+// const Bug = require('../models/Bug.model');
 
+const Helperfunctions =require('./HelperFunctions');
+const Bug=({
+    username:"",
+    email:"",
+    Description:"",
+    File:"",
+    status:"",
+    userID:"",
+    date: { type: Date, default: Date.now },
+});
+const collection=process.env.BugCollection;
 //Get All Bug Reports
-router.route('/').get((req,res)=>{
-    Helperfunctions.find(Bug,function(result){
+router.route('/').get(async(req,res)=>{
+    await Helperfunctions.find(collection).then((result)=>{
         console.log(result)
         res.json(result)})
-    // Bug.find()
-    //     .then(Request=>res.json(Request))
-    //     .catch(err=>res.status(400).json('Error:'+err));
     });
 //Delete a Bug Report
-    router.route("/:id").delete((req,res)=>{
-        console.log(req.params.id)
-        Helperfunctions.findByIdAndDelete(Bug,req.params.id,function(result){
+    router.route("/:id").delete(async(req,res)=>{
+        await Helperfunctions.findAndDelete(collection,{_id:ObjectId(req.params.id)}).then((result)=>{
             res.json(result);
         })
-        // Bug.findByIdAndDelete(req.params.id)
-        //     .then(()=>res.json('req deleted.'))
-        //     .catch(err=>res.status(400).json('Error'+err));
     });
 //get a Bug Report by id
-    router.route("/:id").get((req,res)=>{
-        Helperfunctions.findbyField(Bug,{_id:req.params.id},function(result){
+    router.route("/:id").get(async(req,res)=>{
+        await Helperfunctions.findbyField(collection,{_id:ObjectId(req.params.id)}).then((result)=>{
             res.json(result);
         })
-        // Bug.findById(req.params.id)
-        //     .then((Req)=>res.json({Req}))
-        //     .catch(err=>res.status(400).json('Error'+err));
     })
 //get all the Bug reports by UserID
-    router.route("/Userid/:id").get((req,res)=>{
-        console.log(req.params)
-        Helperfunctions.findbyField(Bug,{userID:req.params.id},function(result){
+    router.route("/Userid/:id").get(async(req,res)=>{
+        await Helperfunctions.findbyField(collection,{userID:req.params.id}).then((result)=>{
             res.json(result);
         })
-        // Bug.find({userID:req.params.id})
-        //     .then((Req)=>res.json({Req}))
-        //     .catch(err=>res.status(400).json('Error'+err));
     })
 //Update The Bug Report Status 
-    router.route("/status/:id").post((req,res)=>{
-        Helperfunctions.findOneAndUpdateByFieldString(Bug,{_id:req.params.id},{status:req.body.status},function(result){
+
+    router.route("/status/:id").post(async(req,res)=>{
+        console.log(req.body.status)
+        console.log(req.params.id)
+        await Helperfunctions.findOneAndUpdate(collection,{_id:ObjectId(req.params.id)},{status:req.body.status}).then((result)=>{
             console.log(result)
             res.json(result)
         })
-        // Bug.findOneAndUpdate({_id:req.params.id},
-        //     {status:req.body.status},{new:true})
-        //     .then((Req)=>res.json({Req}))
-        //     .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
     })
     //create new Bug Report
     router.route('/add').post(async (req,res) => {
         
         try{  
-            const NewBug=new Bug({
+            const NewBug=({
                 username:req.body.username,
                 email:req.body.email,
                 Description:req.body.Description,
@@ -65,12 +60,9 @@ router.route('/').get((req,res)=>{
                 userID:req.body.userID,
             });
             console.log(req.body.userID)
-            Helperfunctions.CreateNew(NewBug,function(result){
+            await Helperfunctions.CreateNew(collection,NewBug).then((result)=>{
                 res.json(result)
             })
-            // NewReq.save()
-            //     .then(Req=>res.status(201).json(Req._id))
-            //     .catch(err=>res.status(400).json('Error:'+err));
         }
         catch{
             err=>res.status(500).json('Error'+err);

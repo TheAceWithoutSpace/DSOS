@@ -1,53 +1,38 @@
-.btn-circle {
-    width: 60px;
-    height: 60px;
-    padding: 6px 0px;
-    margin-right: 20px;
-    border-radius: 30px;
-    text-align: center;
-    font-size: 12px;
-    line-height: 3.5;
-}
-.jumbotron{
-    background-image:url("https://www.stratospherenetworks.com/blog/wp-content/uploads/2017/03/servers.jpg");
-    background-size: 100% 100%;
-}
-#text-h{
-    color:GhostWhite
-}
-#text{
-    font-size:20px;
-    color:GhostWhite;
-}
-.text{
-    font-size:20px;
-    font-style: oblique;
-}
-.sidebar {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    min-height: 100vh !important;
-    z-index: 100;
-    padding: 48px 0 0;
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-}
-#sidebar-wrapper{
-    min-height: 100vh !important;
-    width: 100vw;
-    margin-left: -1rem;
-    -webkit-transition: margin .25s ease-out;
-    -moz-transition: margin .25s ease-out;
-    -o-transition: margin .25s ease-out;
-    transition: margin .25s ease-out;
-}
-#sidebar-wrapper .sidebar-heading {
-    padding: 0.875rem 1.25rem;
-    font-size: 1.2rem;
+#content {
+	text-align: center;
+	padding-top: 10%;
+	font-family: 'Monda', sans-serif;
+	text-shadow: 0px 4px 3px rgba(0,0,0,0.4),
+				 0px 8px 13px rgba(0,0,0,0.1),
+				 0px 18px 23px rgba(0,0,0,0.1);
+	-moz-box-shadow:    inset 0 0 10px #000000;
+	-webkit-box-shadow: inset 0 0 10px #000000;
+	 box-shadow:         inset 0 0 10px #000000;
 }
 
-#page-content-wrapper {
-    min-width: 0;
-    width: 100%;
+#homeBody
+{
+	background: url(https://s27389.pcdn.co/wp-content/uploads/2018/09/enterprise-storage-solution-1024x440.jpeg);
+	opacity: 0.85;
+	background-size: cover;
+	background-position: center;
+	color:rgb(255, 255, 255);
+    height: 41.9rem;
+}
+#h1{
+	font-size: 5em;
+	font-weight: 700;
+	color:rgb(245, 240, 219);
+}
+#h3{
+	font-size: 2.5em;
+	font-weight: 700;
+}
+html{
+	height: 100%
+}
+hr{
+	width: 400px;
+	border-top:1px solid #f8f8f8;
+	border-bottom: 1px solid rgba(0,0,0,0.2)
 }

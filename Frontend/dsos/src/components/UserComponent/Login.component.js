@@ -8,11 +8,14 @@ class Login extends Component{
         super(props);
         this.onChangeUsername=this.onChangeUsername.bind(this);
         this.onChangePassword=this.onChangePassword.bind(this);
+        this.onChangeFlags=this.onChangeFlags.bind(this);
         this.onsubmit=this.onsubmit.bind(this);
         
         this.state={
             username:'',
             password:'',
+            UserNameFlag:false,
+            PasswordFlag:false
         }
     }
     // handeling the form fields
@@ -21,6 +24,12 @@ class Login extends Component{
             username:e.target.value
         });
     }
+    onChangeFlags(Userflag,PasswordFlag){
+        this.setState({
+            UserNameFlag:Userflag,
+            PasswordFlag:PasswordFlag
+        })
+    }
     onChangePassword(e){
         this.setState({
             password:e.target.value
@@ -28,12 +37,12 @@ class Login extends Component{
     }
     // submiting the form
     onsubmit(e){
+        this.props.Loading(true);
         e.preventDefault();
         const User={
             username:this.state.username,
             password:this.state.password
         }
-
         // checking if the user username and password is the sane as saved as in the db
         axios.post('users/login',User)
             .then(res=>{
@@ -46,11 +55,25 @@ class Login extends Component{
                     }else if(res.data.Ar){
                         window.location.href="/Architect";
                     }else{
-                        window.location.href="/Home";
+                        window.location.href="/UserDashboard";
                     }
                 }
             })
-            .catch(err=>{(this.props.msg('UserName or password is incurrect'))
+            .catch((err)=>{
+                console.log(err.response)
+                this.props.Loading(false);
+                if(err.response.data==="Password"){
+                    console.log("Password")
+                    this.onChangeFlags(false,true)
+                    this.props.msg('password is incorrect')
+                }else if(err.response.data==="User Name"){
+                    console.log("UserName")
+                    this.onChangeFlags(true,true)
+                    console.log(this.state.UserNameFlag)
+                    this.props.msg('User Name or password is incorrect')
+                }else{
+                    this.props.msg("Server Error")
+                }
             })
         }
     // rendering the login form
@@ -58,17 +81,17 @@ class Login extends Component{
         return(
             <div>
             <h3>Login</h3>
-            <form onSubmit={this.onsubmit}>
+            <form onSubmit={this.onsubmit} className="needs-validation">
                 <div className="form-group">
                     <label>Username:</label>
                     <input type='text' required
-                    className="form-control" value={this.state.username}
+                    className={`form-control ${this.state.UserNameFlag?`is-invalid`:""}`} value={this.state.username}
                     onChange={this.onChangeUsername}/>
                 </div>
                 <div className="form-group">
                     <label>password:</label>
                     <input type='password' required
-                    className="form-control" value={this.state.password}
+                    className={`form-control ${this.state.PasswordFlag?`is-invalid`:""}`} value={this.state.password}
                     onChange={this.onChangePassword}/>
                 </div>
                 <div>

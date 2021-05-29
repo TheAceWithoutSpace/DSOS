@@ -1,7 +1,8 @@
 import React, { Component} from'react'
 import axios from 'axios'
+import LoadingAnimation from "./Loading"
 
-
+// Admin Storage chart
 class StorageGraft extends Component{
     constructor(props){
         super(props);
@@ -14,19 +15,23 @@ class StorageGraft extends Component{
         let Aggre;
         let SVMSArray;
         console.log(this.props)
+        // get the aggregate by name 
         axios.get(`Aggregate/Aggre/${this.props.Aggre}`)
         .then(async(res)=>{
-            Aggre=res.data[0];
+            Aggre=res.data.res[0];
+            // get all the svms by aggregate name 
             await axios.get(`SvmRoute/SvmByAggreName/${this.props.Aggre}`)
             .then((res)=>{
-            console.log(res.data)
-            SVMSArray=res.data
+            console.log(res.data.res)
+            SVMSArray=res.data.res
 
             });
             this.setState({Aggre:Aggre,SVMSArray:SVMSArray})
          });
     
     }
+
+
     getRandomColor() {
         var letters = '0123456789ABCDEF';
         var color = '#';
@@ -35,38 +40,43 @@ class StorageGraft extends Component{
         }
         return color;
       }
+      // create a bar to display the aggregate status for each svm inside the aggregate
     getBar(){
         return(
             this.state.SVMSArray.map((SVM)=>{
                 let percentage=0;
-                if(SVM.Amount!==0)
-                    percentage=(SVM.Amount/this.state.Aggre.TotalAmount)*100;
+                console.log(SVM)
+                if(SVM.total!==0)
+                    {
+                        percentage=((SVM.total/this.state.Aggre.total)*100);
+                        console.log(percentage)
+                    }
                 return(
                     <div key={SVM._id} className="progress-bar progress-bar-striped"
                     role="progressbar"
-                    data-toggle="tooltip" data-placement="bottom" title={`${SVM.name}--${SVM.Amount}GB`}
-                    style={{width:`${percentage-0.5}%`,backgroundColor:`${this.getRandomColor()}`}}>
-                        {percentage}%
+                    data-toggle="tooltip" data-placement="bottom" title={`${SVM.Name}--${SVM.total}GB`}
+                    style={{width:`${percentage}%`,backgroundColor:`${this.getRandomColor()}`}}>
+                        {percentage.toFixed(3)}%
                 </div>
                 )
             })
         )
     }
-    
+    // render the storage chart
     render(){
         console.log(this.state.Aggre)
         return(
             <>
             {this.state.Aggre?
                 <div className="progress">
-                    {this.state.Aggre.Amount!==0?
+                    {this.state.Aggre.used!==0?
                     <>
-                        {this.state.Aggre.TotalAmount!==0?
+                        {this.state.Aggre.total!==0?
                             <div className="progress-bar progress-bar-striped bg-success"
                                 role="progressbar"
-                                data-toggle="tooltip" data-placement="bottom" title={`Free Space--${this.state.Aggre.TotalAmount-this.state.Aggre.Amount}GB`}
-                                style={{width:`${((this.state.Aggre.Amount/this.state.Aggre.TotalAmount)*-100)+100}%`}}>
-                                    {((this.state.Aggre.Amount/this.state.Aggre.TotalAmount)*-100)+100}%
+                                data-toggle="tooltip" data-placement="bottom" title={`Free Space--${this.state.Aggre.leftToAllocate}GB`}
+                                style={{width:`${(this.state.Aggre.full)*-1+100}%`}}>
+                                    {(this.state.Aggre.full)*-1+100}%
                             </div>
                         :       <div className="progress-bar progress-bar-striped bg-danger tooltip"
                                 role="progressbar"
@@ -78,17 +88,14 @@ class StorageGraft extends Component{
                     </>
                     :<div className="progress-bar progress-bar-striped bg-success"
                              role="progressbar"
-                             data-toggle="tooltip" data-placement="bottom" title={`Free Space--${this.state.Aggre.TotalAmount-this.state.Aggre.Amount}GB`}
+                             data-toggle="tooltip" data-placement="bottom" title={`Free Space--${this.state.Aggre.leftToAllocate}GB`}
                              style={{width:`${100}%`}}>
                                 {100}%
                         </div>
                     }
                     {this.getBar()}
                 </div>
-                :
-                <div className="spinner-grow spinner-grow-sm" role="status">
-                    <span className="sr-only">Loading...</span>
-                </div>
+                :<LoadingAnimation/>
                 }
             </>
             );

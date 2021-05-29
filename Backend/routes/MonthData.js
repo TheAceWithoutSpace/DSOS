@@ -2,113 +2,109 @@ const router = require('express').Router();
 const MonthDate = require('../models/MonthDate.model');
 const Helperfunctions =require('./HelperFunctions');
 const schedule=require('node-schedule');
-
+const { ObjectId } = require('mongodb');
+const collection=process.env.MonthDateCollection;
 //Get All MonthReports
-router.route('/').get((req,res)=>{
-    Helperfunctions.find(MonthDate,function(result){
+router.route('/').get(async(req,res)=>{
+    await Helperfunctions.find(collection).then((result)=>{
         res.json(result)
     })
-    // MonthDate.find()
-    //     .then(Request=>res.json(Request))
-    //     .catch(err=>res.status(400).json('Error:'+err));
-    });
+});
 //Delete a MonthReports
-    router.route("/:id").delete((req,res)=>{
-        Helperfunctions.findByIdAndDelete(MonthDate,{_id:req.params.id},function(result){
+    router.route("/:id").delete(async(req,res)=>{
+        await Helperfunctions.findAndDelete(collection,{_id:ObjectId(req.params.id)}).then((result)=>{
             res.json(result)
         })
-        // MonthDate.findByIdAndDelete(req.params.id)
-        //     .then(()=>res.json('req deleted.'))
-        //     .catch(err=>res.status(400).json('Error'+err));
     });
 //get a MonthReports by id
-    router.route("/:id").get((req,res)=>{
-        Helperfunctions.findbyField(MonthDate,{_id:req.params.id},function(result){
+    router.route("/:id").get(async(req,res)=>{
+        await Helperfunctions.findbyField(collection,{_id:ObjectId(req.params.id)}).then((result)=>{
             res.json(result)
         })
-        // MonthDate.findById(req.params.id)
-        //     .then((Req)=>res.json({Req}))
-        //     .catch(err=>res.status(400).json('Error'+err));
     })
 //get MonthReport by Date
-//get all the MonthReports by Month
-router.route("/Date/:Date").get((req,res)=>{
-    Helperfunctions.findbyField(MonthDate,{Date:req.params.Date},function(result){
+router.route("/Date/:Date").get(async(req,res)=>{
+    console.log(req.params.Date)
+    await Helperfunctions.findbyField(collection,{Date:req.params.Date}).then((result)=>{
         res.json(result)
     })
 });
 //get all the MonthReports by Month
-    router.route("/Month/:Month").get((req,res)=>{
-        Helperfunctions.findbyField(MonthDate,{Month:req.params.Month},function(result){
+    router.route("/Month/:Month").get(async(req,res)=>{
+        console.log(req.params.Month)
+        await Helperfunctions.findbyField(collection,{Date:req.params.Month}).then((result)=>{
             if(result.err){
                 res.status(404).json(result)
             }else{
+                if (result.res.length===0){
+                    result.err="Cant Find this Month Data pls check the string or db connection for more conntact support ";
+                    result.res=null;
+                }
             res.json(result)}
         })
-        // MonthDate.find({Month:req.params.Month})
-        //     .then((Req)=>res.json({Req}))
-        //     .catch(err=>res.status(400).json('Error'+err));
     })
 //get all the valus for range dates
-router.route("/range/:startDate/:endDate").get((req,res)=>{
+router.route("/range/:startDate/:endDate").get(async(req,res)=>{
     console.log(req.params.startDate+'||'+req.params.endDate)
-    // $gte: new Date(new Date(req.params.startDate).setHours(00, 00, 00))
-    // $lt: new Date(new Date(req.params.endDate).setHours(23, 59, 59))
-    Helperfunctions.findbyField(MonthDate,{'Date': {"$gte": req.params.startDate ,"$lte":req.params.endDate} },function(result){
+    await Helperfunctions.findbyField(collection,{'Date': {"$gte": req.params.startDate ,"$lte":req.params.endDate} }).then((result)=>{
+        console.log(result)
         res.json(result)
     })
 })
 //Update The MonthReports users 
-router.route("/users/:Date").post((req,res)=>{
-    Helperfunctions.findOneAndUpdateByField(MonthDate,{Date:req.params.Date},{users:1},function(result){
+router.route("/users/:Date").post(async(req,res)=>{
+    console.log(req.params.Date)
+    await Helperfunctions.findOneAndInc(collection,{Date:req.params.Date},{users:1}).then((result)=>{
+        console.log(result)
         res.json(result)
     })
-    // MonthDate.findOneAndUpdate({Date:req.params.Date},
-    //     {$inc:{users:1}},{new:true})
-    //     .then((Req)=>res.json({Req}))
-    //     .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
 })
 //Update The MonthReports StorageRequests 
-router.route("/StorageRequests/:Date").post((req,res)=>{
-    Helperfunctions.findOneAndUpdateByFiled(MonthDate,{Date:req.params.Date},{StorageRequests:1},function(result){
+router.route("/StorageRequests/:Date").post(async(req,res)=>{
+    await Helperfunctions.findOneAndInc(collection,{Date:req.params.Date}, {StorageRequests:1}).then((result)=>{
         res.json(result)
     })
-    // MonthDate.findOneAndUpdate({Date:req.params.Date},
-    //     {$inc:{StorageRequests:1}},{new:true})
-    //     .then((Req)=>res.json({Req}))
-    //     .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
 })
 //Update The MonthReports bugReports 
-router.route("/bugReports/:Date").post((req,res)=>{
-    Helperfunctions.findOneAndUpdateByFiled(MonthDate,{Date:req.params.Date},{bugReports:1},function(result){
+router.route("/bugReports/:Date").post(async(req,res)=>{
+    await Helperfunctions.findOneAndInc(collection,{Date:req.params.Date},{bugReports:1}).then((result)=>{
         res.json(result)
     })
-    // MonthDate.findOneAndUpdate({Date:req.params.Date},
-    //     {$inc:{bugReports:1}},{new:true})
-    //     .then((Req)=>res.json({Req}))
-    //     .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
 })
 //Update The MonthReports AggreStorageTotal 
-router.route("/AggreStorageTotal/:Date").post((req,res)=>{
-    Helperfunctions.findOneAndUpdateByFiled(MonthDate,{Date:req.params.Date},{AggreStorageTotal:req.body.AggreStorageTotal},function(result){
+router.route("/StorageTotalFree/:Date").post(async(req,res)=>{
+    await Helperfunctions.findOneAndInc(collection,{Date:req.params.Date},{StorageTotalFree:req.body.StorageTotalFree}).then((result)=>{
         res.json(result)
     })
-    // MonthDate.findOneAndUpdate({Date:req.params.Date},
-    //     {$inc:{AggreStorageTotal:req.body.AggreStorageTotal}},{new:true})
-    //     .then((Req)=>res.json({Req}))
-    //     .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
 })
 //Update The MonthReports AggreStorageUsegeAmmount 
-router.route("/AggreStorageUsegeAmmount/:Date").post((req,res)=>{
-    Helperfunctions.findOneAndUpdateByFiled(MonthDate,{Date:req.params.Date},{AggreStorageUsegeAmmount:req.body.AggreStorageUsegeAmmount},function(result){
+router.route("/StorageUsegeAmmount/:Date").post(async(req,res)=>{
+    await Helperfunctions.findOneAndInc(collection,{Date:req.params.Date},
+        {StorageUsegeAmmount:req.body.StorageUsegeAmmount}).then((result)=>{
         res.json(result)
     })
-    // MonthDate.findOneAndUpdate({Date:req.params.Date},
-    //     {$inc:{AggreStorageUsegeAmmount:req.body.AggreStorageUsegeAmmount}},{new:true})
-    //     .then((Req)=>res.json({Req}))
-    //     .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
 })
-    //create new Bug Report
+router.route('/addMonth').post(async (req,res) => {
+    let ts=Date.now()
+    let date_ob = new Date(ts);
+    let date = date_ob.getDate();
+    let month = date_ob.getMonth() + 1;
+    let year = date_ob.getFullYear();
+    try{  
+        const NewMonthDate=({
+            Month:month,
+            year:year,
+            Date:`${month}-${year}`,
+            Data:[],
+            });
+            await Helperfunctions.CreateNew(collection,NewMonthDate).then((result)=>{
+                res.json(result)
+            })
+    }catch{
+        err=>res.status(500).json('Error'+err);
+    }
+})
+    //create new MonthDataReport Report
     router.route('/add').post(async (req,res) => {
         let ts=Date.now()
         let date_ob = new Date(ts);
@@ -116,54 +112,44 @@ router.route("/AggreStorageUsegeAmmount/:Date").post((req,res)=>{
         let month = date_ob.getMonth() + 1;
         let year = date_ob.getFullYear();
         try{  
-            const NewMonthDate=new MonthDate({
-                Date:(month+"-"+date+"-"+year),
-                Month:month+'.'+year,
+            const NewDay=({
+                Date:date,
                 users:0,
                 StorageRequests:0,
                 bugReports:0,
-                AggreStorageTotal:0,
-                AggreStorageUsegeAmmount:0,
+                StorageTotalFree:0,
+                StorageUsegeAmmount:0,
+                StorageRequestsAmount:0,
+                StorageRequestsAmmountAccepted:0,
+                StorageRequestsAmmountDeclined:0,
             });
-            Helperfunctions.CreateNew(NewMonthDate,function(result){
-                if(!result.err){
+            console.log(month+'-'+year)
+            await Helperfunctions.PushIntoArray(collection,{Date:month+'-'+year},{Data:NewDay}).then((result)=>{
+                    console.log(result);
                     res.json(result)
-                }else{
-                    res.status(409).json(result)
-                }
             })
-            // NewMonthDate.save()
-            //     .then(Req=>res.status(201).json(Req))
-            //     .catch(err=>res.status(400).json('Error:'+err));
         }
         catch{
             err=>res.status(500).json('Error'+err);
         }
     
     });
-    let j=schedule.scheduleJob('0 0 0 * * *', () => {
+        let j=schedule.scheduleJob('0 0 0 */1 * *', async(fireDate) => {
         let ts=Date.now()
         let date_ob = new Date(ts);
         let date = date_ob.getDate();
         let month = date_ob.getMonth() + 1;
         let year = date_ob.getFullYear();
+        console.log(fireDate)
         try{  
-           
-            const NewMonthDate=new MonthDate({
-                Date:(month+"-"+date+"-"+year),
-                Month:month+'.'+year,
-                users:0,
-                StorageRequests:0,
-                bugReports:0,
-                AggreStorageTotal:0,
-                AggreStorageUsegeAmmount:0,
-            });
-            Helperfunctions.CreateNew(NewMonthDate,function(result){
-                if(!result.err){
-                    console.log(result)
-                }else{
-                   console.log(result)
-                }
+            const NewMonthDate=({
+                Month:month,
+                year:year,
+                Date:`${month}-${year}`,
+                Data:[],
+                });
+            await Helperfunctions.CreateNew(collection,NewMonthDate).then((result)=>{
+                res.json(result)
             })
         }catch{
             err=>console.log('Error'+err);

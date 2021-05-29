@@ -2,10 +2,13 @@ import React,{Component}from 'react';
 import axios from 'axios';
 import Chart from '../components/chart.component';
 import 'react-dates/initialize';
-import '../components/Admin.css'
-import AdminCompNav from'../components/AdminCompNav'
+import '../components/AdminComponents/Admin.css'
+import AdminCompNav from'../components/AdminComponents/AdminCompNav'
 import 'react-dates/lib/css/_datepicker.css';
 import { DateRangePicker} from 'react-dates';
+import Massage from '../components/Message';
+import LoadingAnimation from'../components/Loading';
+// import "../components/Loading.css"
 
 class Admin extends Component{
     constructor(props){
@@ -16,14 +19,47 @@ class Admin extends Component{
             Bugs:0,
             Aggregates:{Total:0,Amount:0},
             days:[],
+            ErrMsg:null,
             startDate:null,
             endDate:null,
             flag:true,
+            getdata:false,
             chartTitle:'',
             OldEndDate:'',
         }
     }
-
+    //sort the accepted requests vs decline data for the line cart
+    SetDataAcceptVsDecline(){
+        let labels=[];
+        let Accpet=[];
+        let Decline=[];
+        this.state.days.forEach(day=>{
+            // console.log(day)
+            labels.push(day.Date)
+            Accpet.push(day.StorageRequestsAmmountAccepted);
+            Decline.push(day.StorageRequestsAmmountDeclined);
+        });
+        return({
+            chartData:{
+                labels:labels,
+                datasets:[{
+                 label:"Accepted",
+                 fill: false,
+                 backgroundColor:["rgba(255, 99, 132, 0.2)"],
+                 borderColor: ['rgba(255, 99, 132, 0.2)',],
+                 data:Accpet
+                },{
+                    label:"Decline",
+                    fill: false,
+                    backgroundColor:["rgba(50, 120, 132, 0.6)"],
+                    borderColor: ['rgba(50, 120, 132, 0.6)',],
+                    data:Decline
+                }
+                ]
+            }
+        })
+    }
+    //set the data for the line cart 
     SetData(){
         if(this.state.days) {
             let StorageRequests=[];
@@ -31,18 +67,10 @@ class Admin extends Component{
             let users=[];
             let aggre=[];
             let labels=[];
-            let FirestDay=false;
             this.state.days.forEach(day=>{
-                if(new Date(day.Date).getUTCDay()!==0)
-                {   
-                    let DayLabel=parseInt(day.Date[8]+day.Date[9])+1;
-                    if(FirestDay===false)
-                    {
-                        FirestDay=true;
-                        labels.push(1)
-                    }else{
+                // console.log(day)
+                    let DayLabel=day.Date;
                     labels.push(DayLabel)
-                    }
                     if(day.StorageRequests===0){
                         StorageRequests.push(0);
                     }else{
@@ -58,13 +86,15 @@ class Admin extends Component{
                     }else{
                         users.push(parseInt((day.users/this.state.Users)*100));
                     }
-                    if(day.AggreStorageUsegeAmmount===0||day.AggreStorageTotal===0){
+                    if(day.StorageUsegeAmmount===0||day.StorageTotalFree===0){
                         aggre.push(0)
                     }else{
-                        aggre.push(parseInt((day.AggreStorageUsegeAmmount/day.AggreStorageTotal)*100));
+                        aggre.push(parseInt((day.StorageUsegeAmmount/day.StorageTotalFree)*100));
                     }
-                }
             })
+            // console.log(labels)
+            // console.log(users)
+            // console.log(bugReports)
         return({
             chartData:{
                 labels:labels,
@@ -87,11 +117,11 @@ class Admin extends Component{
                     borderColor: ['rgba(120, 99, 182, 0.6)',],
                     data:StorageRequests 
                 },{
-                    label:"Aggregate",
+                    label:"Storage",
                     fill: false,
                     backgroundColor:["rgba(170, 0, 65, 0.6)"],
                     borderColor: ['rgba(170, 0, 65, 0.6)',],
-                    data:aggre 
+                    data:aggre
                 },
                 ]
             }
@@ -102,87 +132,129 @@ class Admin extends Component{
         let Users=0;
         let Requsts=0;
         let Bugs=0;
+        let days=[];
         let Total=0;
         let Amount=0;
+        let STotal=0;
+        let STused =0;
         let ts=Date.now()
         let date_ob = new Date(ts);
         let month = date_ob.getMonth() + 1;
         let year = date_ob.getFullYear();
         let Sd = new Date(this.state.startDate);
-        let StartDate=((Sd.getMonth() + 1)+'-'+Sd.getDate())+'-'+Sd.getFullYear();
+        Sd.setHours(0)
+        let StartDate=(Sd.getMonth() + 1)+'-'+Sd.getFullYear();
         let Ed = new Date(this.state.endDate);
-        let EndDate =((Ed.getMonth()+1)+'-'+Ed.getDate())+'-'+Ed.getFullYear();
-        console.log(StartDate +'||'+EndDate)
-        if(this.state.startDate!==null&&this.state.endDate!==null)
+        Ed.setHours(23)
+        let EndDate =(Ed.getMonth()+1)+'-'+Ed.getFullYear();
+        // console.log(StartDate +'||'+EndDate)
+        this.setState({getdata:false})
+        //get all the aggregates
+        await axios.get(`Aggregate/`).then((res)=>
         {
+            res.data.res.forEach((Aggre)=>{
+                STotal+=parseFloat(Aggre.total);
+                STused+=parseFloat(Aggre.used);
+            })
+            
+        })
+        .catch((err)=>{console.log(err)})
+        //if the user dont ask for the data to be displayed in a range of dates it display the corrent month
+        
+        if(this.state.startDate!==null&&this.state.endDate!==null)
+        {   //if the user ask for range dates to be displayed
+            // console.log(this.state.startDate+"\\"+EndDate)
+            // get the dates from the db
             await axios.get(`MonthDateRoute/range/${StartDate}/${EndDate}`)
             .then((res)=>{
-                console.log(res.data)
-                    res.data.forEach(day=>{
-                        Users+=day.users;
-                        Requsts+=day.StorageRequests;
-                        Bugs+=day.bugReports;
-                        Total+=day.AggreStorageTotal;
-                        Amount+=day.AggreStorageUsegeAmmount;
-                    });
+                // console.log(res.data.res)
+                res.data.res.forEach((month)=>{
+                    // console.log(month)
+                    //handle the data 
+
+                        month.Data.forEach(day=>{
+                            let dayDate=new Date(`${month.Month}-${day.Date}-${month.year}`)
+                            // console.log(((Sd.getDate()<=day.Date)&&(Sd.getMonth()+1)<=month.Month)&&((Ed.getDate>=day.getDate)&&(Ed.getMonth()+1>=month.Month)))
+                           
+                            if((Date.parse(dayDate)>=Date.parse(Sd))&&(Date.parse(dayDate)<=Date.parse(Ed))){
+                                // console.log(day)
+                                Users+=day.users;
+                                Requsts+=day.StorageRequests;
+                                Bugs+=day.bugReports;
+                                Total+=day.StorageTotalFree;
+                                Amount+=day.StorageUsegeAmmount;
+                                days.push(day);
+                            }
+                        });
+                })
+                // console.log(days)
                     this.setState({
                         Users:Users,
-                        chartTitle:`${StartDate} / ${Ed.getDate()+'.'+(Ed.getMonth() + 1)+'.'+Ed.getFullYear()}`,
+                        chartTitle:`${Sd.getDate()+'-'+(Sd.getMonth()+1)+'-'+Sd.getFullYear()} ~ ${Ed.getDate()+'-'+(Ed.getMonth() + 1)+'-'+Ed.getFullYear()}`,
                         Requsts:Requsts,
                         Bugs:Bugs,
-                        days:res.data,
-                        Aggregates:{Total:Total,Amount:Amount},
+                        days:days,
+                        Aggregates:{Total:Total,Amount:Amount,STotal:STotal,STused:STused},
+                        getdata:true,
                     })
             })
         }else{
-            await axios.get(`MonthDateRoute/Month/${month}.${year}`)
+            //get the current month data
+            await axios.get(`MonthDateRoute/Month/${month}-${year}`)
             .then((res)=>{
-                    console.log(res.data)
-                    res.data.forEach(day=>{
+                    if(res.data.res===null){
+                        this.setState({
+                            ErrMsg:res.data.err
+                        })
+                    }else{
+                    res.data.res[0].Data.forEach(day=>{
                         Users+=day.users;
                         Requsts+=day.StorageRequests;
                         Bugs+=day.bugReports;
-                        Total+=day.AggreStorageTotal;
-                        Amount+=day.AggreStorageUsegeAmmount;
+                        Total+=day.StorageTotalFree;
+                        Amount+=day.StorageUsegeAmmount;
                     });
                     this.setState({
                         Users:Users,
-                        chartTitle:`${month}.${year}`,
+                        chartTitle:`${res.data.res[0].Data[0].Date}-${month}-${year} ~ ${res.data.res[0].Data[res.data.res[0].Data.length-1].Date}-${month}-${year}`,
                         Requsts:Requsts,
                         Bugs:Bugs,
-                        days:res.data,
-                        Aggregates:{Total:Total,Amount:Amount}
+                        days:res.data.res[0].Data,
+                        Aggregates:{Total:Total,Amount:Amount,STotal:STotal,STused:STused},
+                        getdata:true,
                     })
+                }
             })
         }
 
     }
+    //generic presentage callculete
     CalcPresentage(a,b){
-        console.log(a+'||'+b)
-        if(a!==0&&b!==0){
-            if(a>b){
-                return(
-                    <span className="text-danger mr-2">
-                        {parseInt((a/b)*-100 )+'%'}    
-                    </span>
-                )
-            }else{
-                return(
-                    <span className="text-success mr-2">
-                        {parseInt((a/b)*100 )+'%'} 
-                    </span>
-                )
-            }
-        }else if(a===0&&b!==0){
+        //mt=m0*qt
+        // console.log(a+'||'+b)
+        if(a===0&&b!==0){
             return('100%')
         }else{
-            return ('0%')
+            if(b===0)
+                {b=1;}
+            if(a!==0&&b!==0){
+                if(a>b){
+                    return(
+                        <span className="text-danger mr-2">
+                            {parseInt((a/b)*-100 )+'%'}    
+                        </span>
+                    )
+                }else{
+                    return(
+                        <span className="text-success mr-2">
+                            {parseInt((a/b)*100 )+'%'} 
+                        </span>
+                    )
+                }
+            }else{
+                return ('0%')
+            } 
         }
-    }
-    DateToDate(){
-        let date=new Date(this.state.days[0].Date);
-        let ToDate=new Date(this.state.days[this.state.days.length-1].Date);
-        return(date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear()+' - '+ToDate.getDate()+'/'+(ToDate.getMonth()+1)+'/'+ToDate.getFullYear());
     }
     componentDidMount(){
         this.dataAsamble()
@@ -197,20 +269,19 @@ class Admin extends Component{
 
 render(){
     const Ur=JSON.parse(localStorage.getItem('user'));
-    console.log(this.state.days)
-    if(this.state.days[0]){
-    let date=new Date(this.state.days[0].Date);
-    console.log(date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear());
-    }return(
+     // console.log(this.state.days)
+    // console.log(this.state.Aggregates.Amount+"||"+this.state.Aggregates.Total)
+    return(
     <div>
         {Ur.A?null:window.location.href = '/UKnoob'}
     <div className="cuntiner-fluid ">
         <div className="row">
-            <div id="sidebarMenu" className="col-md-2 col-lg-2 d-md-block sidebar collapse">
+            <div id="sidebarMenu" className="col-md-2 col-lg-2 d-md-block sidebar">
                 <AdminCompNav />
             </div>
-            <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-md-4 bg-white">
-            {this.state.days[0]?<>
+            <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+            {this.state.ErrMsg?<Massage msg={this.state.ErrMsg}/>:''}
+            {this.state.getdata?<>
                 <div className="chartjs-size-monitor" style={{positon: 'absolute',left: '0px', top: '0px', right: '0px', bottom: '0px', overflow: 'hidden', visibility: 'hidden'}}></div>
                     <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h1 className="h2">Dashboard</h1>
@@ -220,16 +291,16 @@ render(){
                                 startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
                                 endDate={this.state.endDate} // momentPropTypes.momentObj or null,
                                 endDateId="your_unique_end_date_id" // PropTypes.string.isRequired,
-                                onDatesChange={({ startDate, endDate}) => this.setState({ startDate, endDate,flag:true})} // PropTypes.func.isRequired,
+                                onDatesChange={({ startDate, endDate}) => this.setState({ startDate, endDate,flag:true,})} // PropTypes.func.isRequired,
                                 focusedInput={this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
-                                isOutsideRange={date => date.isBefore(new Date(2020, 10, 1)) || date.isAfter(new Date())}
+                                isOutsideRange={date => date.isBefore(new Date(2021, 1, 1)) || date.isAfter(new Date())}
                                 onFocusChange={focusedInput => this.setState({ focusedInput })} // PropTypes.func.isRequired,
                                 />
                             </div>
                     </div>
                     <div className="row">
                         <div className="col-xl-6 col-lg-5">
-                            <div className="row mb-3">
+                            <div className="row mb-4 pb-1">
                                 <div className="col-lg-6">
                                     <div className="card widget-flat">
                                         <div className="card-body">
@@ -243,12 +314,10 @@ render(){
                                             </h5>
                                             <h3 className="mt-3 mb-3 ">{this.state.Users}</h3>
                                             <p className="mb-0 text-muted">
-                                                {this.state.days.length-1?<>
                                                 {this.CalcPresentage(this.state.days[0].users,this.state.days[this.state.days.length-1].users)}
-                                                </>:<>{this.CalcPresentage(this.state.days[0].users,0)}</>}
                                                 <span className="text-nowrap">
                                                 <br/>
-                                                {this.DateToDate()}
+                                                {this.state.chartTitle}
                                                 </span>
                                             </p>
                                         </div>
@@ -267,11 +336,14 @@ render(){
                                             </svg>
                                                 {" Storage"}
                                             </h5>
-                                            <h3 className="mt-3 mb-3">{this.CalcPresentage(this.state.Aggregates.Amount,this.state.Aggregates.Total)}</h3>
+                                                <h2 className="mt-3 mb-3">
+                                                Used: {parseInt(this.state.Aggregates.STused/this.state.Aggregates.STotal*100)}%
+                                                </h2>
                                             <p className="mb-0 text-muted">
+                                            {this.CalcPresentage(this.state.Aggregates.Amount,this.state.Aggregates.Total)}
                                                 <span className="text-nowrap">
                                                 <br/>
-                                                {this.DateToDate()}
+                                                {this.state.chartTitle}
                                                 </span>
                                             </p>
                                         </div>
@@ -299,7 +371,7 @@ render(){
                                                 </>:<>{this.CalcPresentage(this.state.days[0].StorageRequests,0)}</>}   
                                                 <span className="text-nowrap">
                                                 <br/>
-                                                {this.DateToDate()}
+                                                {this.state.chartTitle}
                                                 </span>
                                             </p>
                                         </div>
@@ -324,7 +396,7 @@ render(){
                                                 </>:<>{this.CalcPresentage(this.state.days[0].bugReports,0)}</>}                   
                                                 <span className="text-nowrap">
                                                 <br/>
-                                                {this.DateToDate()}
+                                                {this.state.chartTitle}
                                                 </span>
                                             </p>
                                         </div>
@@ -335,21 +407,23 @@ render(){
                         <div className="col-lg-7 col-xl-6">
                             <div className="card ">
                                 <div className="card-body" style={{position: "relative"}}>
-                                    <div id="high-performing-product" className="align-items-center pt-4 pb-3">
+                                    <div id="high-performing-product" className="align-items-center pt-4 pb-4">
                                          <div className="mar" style={{position:'relative'}}>
-                                            <Chart type='line' title={this.state.chartTitle} chartData={this.SetData()}/>
+                                            <Chart type='line' title={"Requests Accept vs Decline"} chartData={this.SetDataAcceptVsDecline()}/>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </>
-                :<div className="d-flex justify-content-center">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="sr-only">Loading...</span>
+                    <br/>
+                    <div className="card">
+                        <div className="mar" style={{position:'relative'}}>
+                            <Chart type='line' title={this.state.chartTitle} chartData={this.SetData()}/>
+                        </div>
                     </div>
-                </div>}
+                </>
+                :<LoadingAnimation/>}
             </main>
         </div>
     </div>

@@ -1,14 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const mongoose=require("mongoose");
-<<<<<<< HEAD
-const SSH2Shell =require("ssh2shell");
+// const mongoose=require("mongoose");
+// const SSH2Shell =require("ssh2shell");
 require('dotenv/config');
-=======
-const mongoURI="mongodb+srv://ben78901:@cluster0.tl2pj.mongodb.net/<dbname>?retryWrites=true&w=majority";
-//"mongodb://localhost:27017/DSOS";
->>>>>>> 6b226da18ba9e0d8282584c22047e4605be328f5
 app.use(cors());
 app.use(express.json());
 
@@ -24,12 +19,18 @@ const MonthDateRoute =require("./routes/MonthData");
 const schedule=require('node-schedule');
 const SSH=require('./Shell.config')
 
-app.use('/',function (req, res, ) {
-    SSH.GetShellData()
-    res.send('Hello1')
-  })
-  schedule.scheduleJob('0 0 4 * * *', () => {
-    SSH.GetShellData()
+app.use('/getData',async(req,res)=>{
+  await SSH.GetShellData((result)=>{
+    console.log(result)
+    res.json("ok");
+  });
+})
+  schedule.scheduleJob('0 0 */4 * * *',async () => {
+    let ts=new Date(Date.now());
+    console.log(ts.toString())
+    await SSH.GetShellData((result)=>{
+      console.log(result)
+    });
   })
 //RequestsRoutes
 app.use('/Request',ReqRouter);

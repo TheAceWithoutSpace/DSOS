@@ -1,6 +1,7 @@
 import React,{Component}from 'react';
 import {Bar,Line,Pie} from 'react-chartjs-2';
 
+// general chart component
 export default class chart extends Component{
  constructor(props){
      super(props)

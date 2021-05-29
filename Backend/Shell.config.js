@@ -1,24 +1,25 @@
 const SSH2Shell =require("ssh2shell");
 
-const Volume = require('./models/Volume.model');
-const Aggregate= require('./models/Aggregate.model');
-const Svm = require('./models/Svm.model');
+const VolumeCollection = process.env.VolumeCollection;
+const AggregateCollection= process.env.AggreCollection;
+const SvmCollection =process.env.SvmCollection;
 const Helperfunctions =require('./routes/HelperFunctions');
 
 let AggreArray=[];
 let SvmArray=[];
 let VolArray=[];
-
+let Data={Aggre:'',Svm:'',Vol:''}
 var host={
     server:{
         host:process.env.host,
         port:process.env.port,
         userName:"admin",
-        password:""
+        password:"69zu9b3k"
     },
     commands:[],
     idleTimeOut: 5000,
-    debug: false,
+    dataIdleTimeOut:10000,
+    debug: true,
     standardPrompt: "",
     varbose:true,
     showBanner:         false,
@@ -32,24 +33,15 @@ var host={
         switch (command)
         {
             case "aggr show -aggregate !*aggr0* -fields cluster,aggregate,node,size,usedsize,percent-used,availsize,volcount":{
-                let AggreArray=await AggreFunction(command,response);
-                Helperfunctions.CreateArray(Aggregate,AggreArray,function(result){
-                    console.log(result)
-                    });
-                break;
+                Data.Aggre=await AggreFunction(command, response)
+            break;
             }
             case "vserver show -vserver !*cluster* -fields vserver,subtype,aggregate":{
-                let svmArray=await SvmFunction(command,response)
-                 Helperfunctions.CreateArray(Svm,svmArray,function(result){
-                    console.log(result);
-                });
+                Data.Svm=SvmFunction(command,response)
                 break;
             }
             case "vol show -vserver !*cluster* -volume !*root* -fields node,aggregate,vserver,volume,total,size,used,available":{
-                // let volarray=await VolFunction(command,response);
-                // Helperfunctions.CreateArray(Volume,volarray,function(result){
-                // console.log(result);
-                // });
+                Data.Vol=await VolFunction(command,response);
                 break;
             }
             default :{
@@ -58,26 +50,38 @@ var host={
             }
         }
     }
+    ,onEnd: function( sessionText, sshObj ) {
+        console.log("---End---")
+    }
 };
 SSH = new SSH2Shell(host),
 //Use a callback function to process the full session text
 callback = function(sessionText){
+
 }
-    function cutStrSpace(str,Parr){
+    function cutStrSpace(str,Parr){   
+        let Tstr="";
         let arr=[];
-        let Tindex=0;
-        while(Tindex!==-1){
-            let Tcounter=str.indexOf(" ",Tindex);
-            if(Tcounter!=-1){
-                let Tstr=str.slice(Tindex,Tcounter);
-                if(Tstr.length!==0)
+        let curser=0;
+        while(curser<=str.length)
+        {
+            if(str[curser]!=" ")
+            {
+                if(Tstr==null)
                 {
-                    arr.push(Tstr)
+                    Tstr=(str[curser])
+                }else{
+                    Tstr+=(str[curser])
                 }
-            Tindex=Tcounter+1;
             }else{
-                Tindex=Tcounter;
+                // console.log(Tstr+": "+curser+":"+str.length)
+                if(Tstr!=null)
+                {
+                    arr.push(Tstr);
+                }
+                Tstr=null;
             }
+            curser++;
         }
         Parr.push(arr);
     }
@@ -85,29 +89,40 @@ callback = function(sessionText){
         let Tempres=response.slice(command.length+3,(response.length-16));
         let Title=Tempres.slice(0,135);
         let numofVol=parseInt(Tempres.slice(Tempres.length-26,Tempres.length-24));
-        let CharB=Tempres.slice(135,Tempres.length-26);
-        let index=0;
-        for (let i=0;i<numofVol;i++){                  
-            let Vol=CharB.slice(index,CharB.length/(numofVol-i));
+        let CharB=Tempres.slice(137,Tempres.length-26);
+        // console.log(Title)
+        // console.log(CharB)
+        // console.log(CharB.slice(0,CharB.indexOf("\r\n")))
+        console.log("-------"+numofVol+"---------")
+
+        let Temp=CharB.substring(0,CharB.length)
+        let Vol="";
+        for (let i=1;i<=numofVol;i++){ 
+            // console.log(Temp.slice(0,Temp.indexOf("\r\n")+2))
+            Vol=Temp.slice(0,Temp.indexOf("\r\n")+2)
+            Temp=Temp.slice(Vol.length,Temp.length)
             cutStrSpace(Vol,VolArray);
-            index+=(CharB.length/(numofVol-i))+1;
         }
-        let VolObjArray=[];
         console.log(VolArray)
-        VolArray.forEach((volobj)=>{
-            let AggreObj=FindAggreByName(volobj[2]);
-            let volume=new Volume({
+        let VolObjArray=[];
+        VolArray.forEach(async (volobj)=>{
+            let volume=({
                 locationstring:".../"+volobj[2]+"/"+volobj[0]+"/"+volobj[1],
-                Cluster:AggreObj,
+                Cluster:"",
                 env:volobj[7],
                 aggregate:volobj[2],
                 svm:volobj[0],
                 Name:volobj[1],
-                total:(volobj[5].slice(0,volobj[5].length-2)/1024).toFixed(3),
+                total:(volobj[3].slice(0,volobj[3].length-2)/1024).toFixed(3),
                 used:(volobj[6].slice(0,volobj[6].length-2)/1024).toFixed(3),
                 available:(volobj[4].slice(0,volobj[4].length-2)/1024).toFixed(3),
                 dedupeCapSaved:0,   
-                });+
+                });
+            AggreArray.forEach(Aggre => {
+                if (Aggre[0] == volobj[2]) {
+                    volume.Cluster = Aggre[3];
+                }
+            });
             VolObjArray.push(volume);
         })
         console.log("--------vol----------")
@@ -119,15 +134,24 @@ callback = function(sessionText){
         let Tempres=response.slice(command.length+3,(response.length-16));
             let Title=Tempres.slice(0,57);//title
             let numofSvms=parseInt(Tempres.slice(Tempres.length-26,Tempres.length-24));
-            let CharB=Tempres.slice(57,Tempres.length-26);//response
-            let index=0;
+            let CharB=Tempres.slice(55,Tempres.length-26);//response
+            // let index=0;
             // console.log(Title);
             // console.log(CharB);
-            
-            for (let i=0;i<numofSvms;i++){                  
-                let Svm=CharB.slice(index,CharB.length/(numofSvms-i));
+            let Temp=CharB.substring(0,CharB.length)
+            let Svm="";
+            for (let i=1;i<=numofSvms;i++){ 
+                
+                Svm=Temp.slice(0,Temp.indexOf("\r\n")+2)
+                Temp=Temp.slice(Svm.length,Temp.length)
+                // if(28*(i+1)>CharB.length)
+                // {
+                //     Svm=CharB.slice(index,CharB.length);
+                // }else{
+                //     Svm=CharB.slice(index,28*(i));
+                // }
                 cutStrSpace(Svm,SvmArray);
-                index+=(CharB.length/(numofSvms-i));
+                // index=(28*(i));
             }
             let Aggreobj;
             let SvmObjArray=[];
@@ -137,7 +161,8 @@ callback = function(sessionText){
                         Aggreobj=Aggre;
                     }
                 });
-                let svm=new Svm({
+                let svm=({
+                    locationstring:`${Aggreobj[3]}/${Svmobj[2]}/${Svmobj[0]}`,
                     Cluster:Aggreobj[3],
                     env:Aggreobj[1],
                     aggregate:Svmobj[2],
@@ -147,31 +172,31 @@ callback = function(sessionText){
                     available:0,
                     full:0,
                     dedupeCapSaved:0,
-                    VolumeCount:Aggreobj[7],
+                    VolumeCount:0,
                 });
-                VolArray.forEach(Vol=>{
-                    if(Vol[0]==Svmobj[0])
-                    {
-                        svm.total+=(Vol[5].slice(0,Vol[5].length-2)/1024).toFixed(3);
-                        svm.used+=(Vol[6].slice(0,Vol[6].length-2)/1024).toFixed(3);
-                        svm.available+=(Vol[4].slice(0,Vol[4].length-2)/1024).toFixed(3);
+                Data.Vol.forEach(Vol=>{
+                    if(Vol.svm==Svmobj[0])
+                    { 
+                        svm.total+=parseFloat(Vol.total);
+                        svm.used+=parseFloat(Vol.used);
+                        svm.available+=parseFloat(Vol.available);
+                        svm.VolumeCount++;
                     }
-
                 })
-                svm.full=parseInt(((svm.total-svm.available)/svm.total)*100)
+                svm.full=parseFloat(((svm.total-svm.available)/svm.total)*100).toFixed(4)
                 SvmObjArray.push(svm);
 
             });
-            console.log("--------svm----------")
-            console.log(SvmObjArray)
-            console.log("---------------------")
+            // console.log("--------svm----------")
+            // console.log(SvmObjArray)
+            // console.log("---------------------")
             return SvmObjArray;
     }
     function AggreFunction(command,response){
         let Tempres=response.slice(command.length+3,(response.length-16));
             let numofAggre=parseInt(Tempres.slice(Tempres.length-26,Tempres.length-24));
             let Tableheader= Tempres.slice(0,121);
-            let CharB=Tempres.slice(165,Tempres.length-26);
+            let CharB=Tempres.slice(161,Tempres.length-26);
             let index=0;
             // console.log(Tableheader);
             // console.log(CharB)
@@ -182,8 +207,9 @@ callback = function(sessionText){
                     index+=(CharB.length/(numofAggre-i))+1;
             }
             let AggreObjArray=[];
-            AggreArray.forEach(async(Aggreobj)=>{
-                let Aggre=new Aggregate({
+            AggreArray.forEach((Aggreobj)=>{
+                let Aggre=({
+                    locationstring:`${Aggreobj[3]}/${Aggreobj[0]}`,
                     Cluster:Aggreobj[3],
                     Name:Aggreobj[0],
                     env:Aggreobj[1],
@@ -197,36 +223,73 @@ callback = function(sessionText){
                 // console.log("---------------|"+j+"|--------------")
                 AggreObjArray.push(Aggre);
             })
-            console.log("--------Aggre----------")
-            console.log(AggreObjArray)
-            console.log("---------------------")
+            // console.log("--------Aggre----------")
+            // console.log(AggreObjArray)
+            // console.log("---------------------")
         return AggreObjArray;
     }
-    function FindAggreByName(Name)
-    {
-        AggreArray.forEach(Aggre => {
-            if (Aggre[0] == Name) {
-                return (Aggre[3]);
-            }
-        });
-    }
+
     module.exports={
         async ActiveCommendInShell(command){
             host.commands=command
             SSH=new SSH2Shell(host),
             await SSH.connect();
         },
-        async GetShellData(){
+        async GetShellData(callback){
             host.commands=["row 0","set -units MB",
             "aggr show -aggregate !*aggr0* -fields cluster,aggregate,node,size,usedsize,percent-used,availsize,volcount",
             "vol show -vserver !*cluster* -volume !*root* -fields node,aggregate,vserver,volume,total,size,used,available",
-            "vserver show -vserver !*cluster* -fields vserver,subtype,aggregate",]
-            await SSH.connect();
+            "vserver show -vserver !*cluster* -fields vserver,subtype,aggregate","exit"]
+            await SSH.connect(async(result)=>{
+                Data.Aggre.forEach((Aggre)=>{
+                    Data.Vol.forEach((Vol)=>{
+                        console.log(Aggre.Name===Vol.aggregate)
+                        if(Aggre.Name===Vol.aggregate){
+                            console.log(Vol);
+                            Aggre.allocated+=parseFloat(Vol.total);
+                        }
+                    })    
+                })
+                const resultA=await Helperfunctions.ArrayDataHendle(AggregateCollection,Data.Aggre);
+                console.log(resultA);
+                const resultS=await Helperfunctions.ArrayDataHendle(SvmCollection,Data.Svm);
+                console.log(resultS);
+                const resultV=await Helperfunctions.ArrayDataHendle(VolumeCollection,Data.Vol);
+                console.log(resultV)
+                callback(Data);
+            })
         },
-        createVolume(svm,vol,aggre,size){
-            host.commands=[`volume create -vserver ${svm} -volume ${vol} -aggregate ${aggre} 
-                -state online -size${size} -state online -policy default`]
-                SSH.connect();
+        createVolume(svm,vol,aggre,size,callback){
+            host.commands=[`volume create -vserver ${svm} -volume ${vol} -aggregate ${aggre} -size ${size}GB -state online -policy default`]
+                SSH.connect(async (result)=>{
+                    let res={flag:true,msg:''}
+                    let Error=result.indexOf("Error");
+                    if(Error==-1)
+                    {
+                        res.flag=true;
+                        res.msg='Job succeeded'
+                    }else{
+                        res.flag=false;
+                        res.msg=result.slice(Error,result.lastIndexOf(".")+1)
+                    }
+                    callback(res);
+                });             
+        },
+        createSvm(svm,aggre,callback){
+            host.commands=[`vserver create -vserver ${svm} -aggregate ${aggre}`]
+            SSH.connect(async(result)=>{
+                let res={flag:true,msg:''}
+                let Error=result.indexOf("Error");
+                if(Error==-1)
+                {
+                    res.flag=true;
+                    res.msg='Job succeeded'
+                }else{
+                    res.flag=false;
+                    res.msg=result.slice(Error,result.lastIndexOf(".")+1)
+                }
+                callback(res);
+            });  
         }
 }
 

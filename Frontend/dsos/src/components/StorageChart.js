@@ -2,6 +2,7 @@ import React,{Component, Fragment}from 'react';
 import axios from 'axios';
 import Chart from './chart.component';
 
+//Storage Chart
 export default class StorageChart extends Component{
    constructor(props){
        super(props);
@@ -28,6 +29,7 @@ async componentDidMount(nextProps)
     let ChartTitle='';
     console.log('---------')
     console.log(this.props.Aggre)
+    // get all the svms by aggregate name
     await axios.get(`SvmRoute/SvmByAggreName/${this.props.Aggre}`)
         .then((res)=>{SVMSArray=res.data});
         if(UsedAmount===0){
@@ -36,6 +38,7 @@ async componentDidMount(nextProps)
             SvmsAmount.push((parseInt((( TotalAmount-UsedAmount)/TotalAmount)*10000))/100);
         }
         SvmsName.push('Free')
+        // create a chart to display the status of the aggregate
         SVMSArray.forEach((SVM)=>{
             if(SVM.Amount!==0)
             {   console.log(SVM)
@@ -64,26 +67,6 @@ async componentDidMount(nextProps)
                     }
                 })
             console.log(Chartdata)
-            // let message='';
-            // let presentage=parseInt(((this.props.Amount+UsedAmount)/TotalAmount)*100);
-            // if(TotalAmount===null||UsedAmount===null||this.props.Amount===null)
-            // {
-            //     message="Server Errore cant get the data Please try again later"
-            // }
-            // if(presentage<100)
-            // {
-            //     message=`All Clear ${(presentage-100)*-1}% Free left after`
-            // }
-            // if(presentage>=100&&presentage<140)
-            // {
-            //     message=`OVER SUBSCRIBE if you accept ${presentage}% Black line %`
-            // }
-            // if(presentage>140)
-            // {
-            //     message=`Over SUBSCRIBE ${presentage}% Red line cant allocate this user Storage request`
-            // }
-            // this.props.getMessage({message,presentage});
-            
             this.setState({Chartdata:Chartdata,ChartTitle:ChartTitle})
     }   
 }

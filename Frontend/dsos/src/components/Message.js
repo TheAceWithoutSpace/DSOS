@@ -1,9 +1,10 @@
 import React from'react'
 import PropTypes from 'prop-types'
 
+// handle the masg componnent
 const Message=({msg})=>{
     return(
-        <div className="alert alert-info alert-dismissible fade show" role="alert">
+        <div className="alert alert-warning alert-dismissible fade show mt-5" role="alert">
             {msg}
         <button
             type="button"

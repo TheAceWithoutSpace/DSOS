@@ -37,7 +37,7 @@ class ReportBug extends Component{
     onclicked(e){
         this.setState({flag:true})
     }
-    // submiting the form and creating new user in the server
+    // submiting the form and creating new bug report in the db 
     onsubmit=async(e)=>{
         e.preventDefault();
         this.onclicked();

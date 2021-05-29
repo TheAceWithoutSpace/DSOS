@@ -2,7 +2,7 @@ import React from'react'
 import PropTypes from 'prop-types'
 
 const Progress=({percentage})=>{
-
+    //proggress bar used in the file upload system
     return(
     <div className="progress">
         <div 

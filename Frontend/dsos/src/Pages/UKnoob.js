@@ -1,5 +1,5 @@
 import React from 'react';
-
+//if user try to navigate to a page without the authorization to send him to this fake page
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 async function logout ()

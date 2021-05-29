@@ -41,8 +41,9 @@ const storage = new GridFsStorage({
 const upload =multer({storage});
 //Uploud file
 router.route("/upload").post(upload.single('file'),(req,res,)=>{
+  console.log(req.file)
     if(req.file===null)
-        return res.status(400).jsno({msg:'no file uploaded'})
+        return res.status(400).json({msg:'no file uploaded'})
     res.json({file:req.file})
 });
 //get All Filles

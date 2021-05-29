@@ -1,57 +1,45 @@
 const router = require('express').Router();
+const { ObjectId } = require('mongodb');
 const StorageRequest = require('../models/Requsts.model');
 const Helperfunctions =require('./HelperFunctions');
 //Get all The Storage Requests
-router.route('/').get((req,res)=>{
-    Helperfunctions.find(StorageRequest,function(result){
+const collection=process.env.StorageRequestCollection;
+router.route('/').get(async(req,res)=>{
+    await Helperfunctions.find(collection).then((result)=>{
         res.json(result)
     })
-    // StorageRequest.find()
-    //     .then(Request=>res.json(Request))
-    //     .catch(err=>res.status(400).json('Error:'+err));
-    });
+});
 //Delete Storage Request by id
-    router.route("/:id").delete((req,res)=>{
-        Helperfunctions.findByIdAndDelete(StorageRequest,function(result){
+    router.route("/:id").delete(async(req,res)=>{
+        await Helperfunctions.findAndDelete(collection,{_id:ObjectId(req.params.id)}).then((result)=>{
             res.json(result);
         })
-        // StorageRequest.findByIdAndDelete(req.params.id)
-        //     .then(()=>res.json('req deleted.'))
-        //     .catch(err=>res.status(400).json('Error'+err));
     });
 //Get Storage Request by id
-    router.route("/:id").get((req,res)=>{
-        Helperfunctions.findbyField(StorageRequest,{_id:req.params.id},function(result){
+    router.route("/:id").get(async(req,res)=>{
+        console.log(req.params.id)
+        await Helperfunctions.findbyField(collection,{_id:ObjectId(req.params.id)}).then((result)=>{
+            console.log(result)
             res.json(result);
         })
-        // StorageRequest.findById(req.params.id)
-        //     .then((Req)=>res.json({Req}))
-        //     .catch(err=>res.status(400).json('Error'+err));
     })
 //get all the Requests by UserID
-    router.route("/Userid/:id").get((req,res)=>{
-        Helperfunctions.findbyField(StorageRequest,{userID:req.params.id},function(result){
+    router.route("/Userid/:id").get(async(req,res)=>{
+        await Helperfunctions.findbyField(collection,{userID:req.params.id}).then((result)=>{
             res.json(result)
         })
-        // StorageRequest.find({userID:req.params.id})
-        //     .then((Req)=>res.json({Req}))
-        // .catch(err=>res.status(400).json('Error'+err));
     })
 
 //Update The Storage Request status 
-    router.route("/status/:id").post((req,res)=>{
-        Helperfunctions.findOneAndUpdateByFieldString(StorageRequest,{_id:req.params.id},{status:req.body.status},function(result){
+    router.route("/status/:id").post(async(req,res)=>{
+        await Helperfunctions.findOneAndUpdate(collection,{_id:ObjectId(req.params.id)},{status:req.body.status}).then((result)=>{
             res.json(result);
         })
-        // StorageRequest.findOneAndUpdate({_id:req.params.id},
-        //     {status:req.body.status},{new:true})
-        //     .then((Req)=>res.json({Req}))
-        //     .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
     })
 //create new Storage Request
     router.route('/add').post(async (req,res) => {  
         try{  
-            const NewReq=new StorageRequest({
+            const NewReq=({
                 username:req.body.username,
                 email:req.body.email,
                 Name:{C:req.body.Name.C,A:req.body.Name.A,S:req.body.Name.S,V:req.body.Name.V},
@@ -62,12 +50,10 @@ router.route('/').get((req,res)=>{
                 type:req.body.type,
                 userID:req.body.userID,
             });
-            Helperfunctions.CreateNew(NewReq,function(result){
+            await Helperfunctions.CreateNew(collection,NewReq).then((result)=>{
+                console.log(result)
                 res.json(result)
             })
-            // NewReq.save()
-            //     .then(Req=>res.status(201).json(Req._id))
-            //     .catch(err=>res.status(400).json('Error:'+err));
         }
         catch{
             err=>res.status(500).json('Error'+err);

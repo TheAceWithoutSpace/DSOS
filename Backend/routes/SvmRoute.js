@@ -1,85 +1,76 @@
 const router = require('express').Router();
-const Svm = require('../models/Svm.model');
+const { ObjectId } = require('mongodb');
+const SSH = require('../Shell.config');
 const Helperfunctions =require('./HelperFunctions');
 //Get all The Storage Svm
-router.route('/').get((req,res)=>{
-    Helperfunctions.find(Svm,function(result){
+const collection=process.env.SvmCollection
+router.route('/').get(async(req,res)=>{
+    await Helperfunctions.find(collection).then((result)=>{
         res.json(result)
     })
-    // Svm.find()
-    //     .then(Svm=>res.json(Svm))
-    //     .catch(err=>res.status(400).json('Error:'+err));
-    });
+});
 //Delete Svm by id
-    router.route("/:id").delete((req,res)=>{
-        Helperfunctions.findByIdAndDelete(Svm,{_id:req.params.id},function(result){
+    router.route("/:id").delete(async(req,res)=>{
+        await Helperfunctions.findAndDelete(collection,{_id:ObjectId(req.params.id)}).then((result)=>{
             res.json(result)
         })
-        // Svm.findByIdAndDelete(req.params.id)
-        //     .then(()=>res.json('req deleted.'))
-        //     .catch(err=>res.status(400).json('Error'+err));
     });
 //Get Svm by id
-    router.route("/:id").get((req,res)=>{
-        Helperfunctions.findbyField(Svm,{_id:req.params.id},function(result){
+    router.route("/:id").get(async(req,res)=>{
+        await Helperfunctions.findbyField(collection,{_id:ObjectId(req.params.id)}).then((result)=>{
             res.json(result)
         })
-        // Svm.findById(req.params.id)
-        //     .then((Svm)=>res.json({Svm}))
-        //     .catch(err=>res.status(400).json('Error'+err));
     })
     //get all the Storage Request for the Svm
-    router.route('/SvmByAggreName/:aggregate').get((req,res)=>{
-        console.log(req.params)
-        Helperfunctions.findbyField(Svm,{aggregate:req.params.aggregate},function(result){
+    router.route('/SvmByAggreName/:Aggre').get(async(req,res)=>{
+        await Helperfunctions.findbyField(collection,{aggregate:req.params.Aggre}).then((result)=>{
+            console.log(result)
             res.json(result)
         })
-        // Svm.find({Aggregate:req.params.AgreName})
-        //     .then((Req)=>res.json({Req}))
-        //     .catch(err=>res.status(400).json('Error'+err));
     })
 //Uptade Amount
-    router.route("/Amount/:Name").post((req,res)=>{
-        Helperfunctions.findOneAndUpdateByField(Svm,{Name:req.params.Name},{VolumeCount:1},function(result){
+    router.route("/Amount/:Name").post(async(req,res)=>{
+        await Helperfunctions.findOneAndUpdate(collection,{Name:req.params.Name},{$inc:{VolumeCount:1}}).then((result)=>{
             console.log(result)
         })
-        Helperfunctions.findOneAndUpdateByField(Svm,{Name:req.params.Name},{available:(req.body.Amount*-1)},function(result){
+        await Helperfunctions.findOneAndUpdate(collection,{Name:req.params.Name},{$inc:{available:(req.body.Amount*-1)}}).then((result)=>{
             console.log(result)
         })
-        Helperfunctions.findOneAndUpdateByField(Svm,{Name:req.params.Name},{used:req.body.Amount},function(result){
+        await Helperfunctions.findOneAndUpdate(collection,{Name:req.params.Name},{$inc:{used:req.body.Amount}}).then((result)=>{
             res.json(result)
         })
-        // Svm.findOneAndUpdate({name:req.params.name},
-        //     {$inc:{Amount:req.body.Amount}},{new:true})
-        //     .then((Req)=>res.json({Req}))
-        //     .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
     })
 //create new Svm
     router.route('/add').post(async (req,res) => { 
         console.log(req.body) 
-        try{  
-            const SvmRequest=new Svm({
-                Cluster:req.body.Cluster,
-                env:req.body.env,
-                aggregate:req.body.aggregate,
-                Name:req.body.Name,
-                total:req.body.total,
-                used:0,
-                available:req.body.available,
-                full:req.body.full,
-                dedupeCapSaved:req.body.dedupeCapSaved,
-                VolumeCount:0,
-            });
-            Helperfunctions.CreateNew(SvmRequest,function(result){
-                res.json(result)
-            })
-            // SvmRequest.save()
-            //     .then(Svm=>res.status(201).json(Svm._id))
-            //     .catch(err=>res.status(400).json('Error:'+err));
+        await SSH.createSvm(req.body.Name,req.body.aggregate,async(result)=>{
+            console.log(result)  
+            if(result.flag===true){ 
+                try{  
+                    const SvmRequest=({
+                        locationstring:`${req.body.Cluster}/${req.body.aggregate}/${req.body.Name}`,
+                        Cluster:req.body.Cluster,
+                        env:req.body.env,
+                        aggregate:req.body.aggregate,
+                        Name:req.body.Name,
+                        total:req.body.total,
+                        used:0,
+                        available:req.body.available,
+                        full:req.body.full,
+                        dedupeCapSaved:req.body.dedupeCapSaved,
+                        VolumeCount:0,
+                    });
+                    await Helperfunctions.CreateNew(collection,SvmRequest).then((result)=>{
+                        res.json(result)
+                    })
+                }
+            catch{
+                err=>res.status(500).json('Error'+err);
+            }
+        }else{
+            res.status(500).json(result.msg);
         }
-        catch{
-            err=>res.status(500).json('Error'+err);
-        }
+        })
     })
 
 module.exports=router;

@@ -1,50 +1,37 @@
 const router = require('express').Router();
-const Aggregate = require('../models/Aggregate.model');
+// const Aggregate = require('../models/Aggregate.model');
 const Helperfunctions =require('./HelperFunctions');
+const collection=process.env.AggreCollection
 //Get all The Aggregate
-router.route('/').get((req,res)=>{
-    Helperfunctions.find(Aggregate,function(result){
-    res.json(result)})
-    // Aggregate.find()
-    //     .then(Aggregate=>res.json(Aggregate))
-    //     .catch(err=>res.status(400).json('Error:'+err));
+router.route('/').get(async(req,res)=>{
+    await Helperfunctions.find(collection).then(result=>{
+        console.log(result)
+        res.json(result)
+        })
     });
 //Delete Storage Aggregate by id
-    router.route("/:id").delete((req,res)=>{
-        Helperfunctions.findByIdAndDelete(Aggregate,req.params.id,function(result){
-            res.json(result)})
-        // Aggregate.findByIdAndDelete(req.params.id)
-        //     .then(()=>res.json('Aggregate deleted.'))
-        //     .catch(err=>res.status(400).json('Error'+err));
+    router.route("/:id").delete(async(req,res)=>{
+        await Helperfunctions.findAndDelete(collection,{_id:req.params.id}).then((result)=>{
+            res.json(result);
+        })
     });
     //get all the Storage Request for the Svm
-    router.route('/Aggre/:Cluster').get((req,res)=>{
-        Helperfunctions.findbyField(Aggregate,{Cluster:req.params.Cluster},function(result,status){
-           console.log(status) 
+    router.route('/Aggre/:AggreName').get(async(req,res)=>{
+        await Helperfunctions.findbyField(collection,{Name:req.params.AggreName}).then((result)=>{
             res.json(result)
         })
-        // Aggregate.find({name:req.params.name})
-        //     .then((Req)=>res.json({Req}))
-        //     .catch(err=>res.status(400).json('Error'+err));
     })
 //Get Storage Aggregate by id
-    router.route("/:id").get((req,res)=>{
-        Helperfunctions.findbyField(Aggregate,{_id:req.params.id},function(result){
+    router.route("/:id").get(async(req,res)=>{
+        await Helperfunctions.findbyField(collection,{_id:req.params.id}).then((result)=>{
         res.json(result)})
-        // Aggregate.findById(req.params.id)
-        //     .then((Req)=>res.json({Req}))
-        //     .catch(err=>res.status(400).json('Error'+err));
     })
 //Update Aggregatte Amount on new volume create 
-    router.route("/Amount/:Name").post((req,res)=>{
-        Helperfunctions.findOneAndUpdateByField(Aggregate,{Name:req.params.Name},{allocated:req.body.Amount},function(result){
+    router.route("/Amount/:Name").post(async(req,res)=>{
+        await Helperfunctions.findOneAndUpdate(collection,{Name:req.params.Name},{$inc:{Amount:req.body.Amount}}).then((result)=>{
             res.json(result)})
-        // Aggregate.findOneAndUpdate({name:req.params.name},
-        //     {$inc:{Amount:req.body.Amount}},{new:true})
-        //     .then((Req)=>res.json({Req}))
-        //     .catch((err)=>res.status(404).json({err:'Couldent Find The File '+err}))
     })
-//create new Aggregate ***Delete this***
+    //**---anable aggregate creation  in the admin deshbord---**
     // router.route('/add').post(async (req,res) => {  
     //     try{  
     //         const NewAggregate=new Aggregate({
